@@ -1,0 +1,16 @@
+@RELATION Height-Sex
+
+@ATTRIBUTE Height  NUMERIC
+@ATTRIBUTE class   {M,F}
+@DATA
+
+168,M
+154,F
+167,M
+169,F
+183,M
+180,M
+161,M
+164,F
+155,F
+173,F
