@@ -27,14 +27,14 @@ public class UEA_ML_Coursework {
         if (allData != null){
             
             // Print dataset information
-//            System.out.println("Attributes: " + allData.numAttributes() 
-//                    + "\nInstances: " + allData.numInstances() + 
-//                    "\nClasses: " + allData.numClasses());
-//            double[] classDist = WekaTools.classDistribution(allData);
-//            for (int i = 0; i < classDist.length; i++){
-//                System.out.println("Class index " + i + " distribution: "
-//                        + classDist[i]);
-//            }
+            System.out.println("Attributes: " + allData.numAttributes() 
+                    + "\nInstances: " + allData.numInstances() + 
+                    "\nClasses: " + allData.numClasses());
+            double[] classDist = WekaTools.classDistribution(allData);
+            for (int i = 0; i < classDist.length; i++){
+                System.out.println("Class index " + i + " distribution: "
+                        + classDist[i]);
+            }
             
             // Spliting the data
             Instances[] splitedData = WekaTools.splitData(allData, 0.3);
@@ -74,7 +74,7 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-        test1("./data/Height_Width_Sex.arff");
+        test1("./data/Height_Sex.arff");
         
     }
     
