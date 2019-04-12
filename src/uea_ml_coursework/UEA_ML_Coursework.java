@@ -43,7 +43,8 @@ public class UEA_ML_Coursework {
             
             // Instantiate classifier
             KNN oneNN = new KNN();
-            oneNN.setK(5);
+            oneNN.setK(19);
+//            oneNN.setK(31);
             
             // Build the classifier using the training data
             try{
@@ -64,6 +65,8 @@ public class UEA_ML_Coursework {
             System.out.println("The One Neares Neighbor accuracy is: " 
                     + accuracy + "%");
 
+//            System.out.println(oneNN.getCapabilities());
+            
         }
         
     }
@@ -74,7 +77,7 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-        test1("./data/Height_Sex.arff");
+        test1("./data/FootballPlayers.arff");
         
     }
     

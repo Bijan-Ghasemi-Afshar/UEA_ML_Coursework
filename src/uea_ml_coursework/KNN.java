@@ -6,8 +6,11 @@
  */
 package uea_ml_coursework;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import weka.classifiers.AbstractClassifier;
+import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -46,6 +49,43 @@ public class KNN extends AbstractClassifier{
     public void buildClassifier(Instances data) throws Exception {
         trainingData = data;
         votes = new int[trainingData.numClasses()];
+        
+        // Delete instances with no class value
+        trainingData.deleteWithMissingClass();
+        
+        // Deleting attributes that are not supported (not numeric)
+        for (int i = trainingData.numAttributes() - 2; i >= 0; i--){
+            if (!getCapabilities().test(trainingData.attribute(i))){
+                trainingData.deleteAttributeAt(i);
+            }
+        }
+
+        System.out.println("New Number of Attributes: " + trainingData.numAttributes());
+    }
+    
+    /**
+     * This function returns the capabilities of this implementation of this 
+     * classifier
+     * @return The Capabilities object with allowed capabilities.
+     */
+    @Override
+    public Capabilities getCapabilities(){
+        
+        Capabilities capabilities = super.getCapabilities();
+        capabilities.disableAll();
+
+        // Enabling attributes supported by this classifier
+        capabilities.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
+
+        // Enabling class attributes supported by this classifier
+        capabilities.enable(Capabilities.Capability.NOMINAL_CLASS);
+        capabilities.enable(Capabilities.Capability.NUMERIC_CLASS);
+
+        // Minimum requried instances
+        capabilities.setMinimumNumberInstances(1);
+
+        return capabilities;
+        
     }
     
     /**
