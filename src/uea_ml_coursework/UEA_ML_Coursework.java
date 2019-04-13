@@ -43,7 +43,7 @@ public class UEA_ML_Coursework {
             
             // Instantiate classifier
             KNN oneNN = new KNN();
-//            oneNN.setK(3);
+            oneNN.setK(3);
 //            oneNN.setK(31);
             
             // Build the classifier using the training data

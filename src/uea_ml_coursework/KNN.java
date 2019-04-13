@@ -6,13 +6,11 @@
  */
 package uea_ml_coursework;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.filters.unsupervised.attribute.Standardize;
 
 /**
  * 10/04/2019
@@ -22,6 +20,9 @@ public class KNN extends AbstractClassifier{
 
     // Class properties
     private Instances dataModel;
+    private boolean standardise;
+    private double[] means;
+    private double[] standardDeviations;
     private int k;
     private int[] votes;
     
@@ -30,6 +31,16 @@ public class KNN extends AbstractClassifier{
      */
     public KNN(){
         this.k = 1;
+        this.standardise = true;
+    }
+    
+    /**
+     * Constructor for initialising the KNN object.
+     * @param standardise Flag to whether standardise values of not.
+     */
+    public KNN(boolean standardise){
+        this.k = 1;
+        this.standardise = standardise;
     }
     
     /**
@@ -68,7 +79,9 @@ public class KNN extends AbstractClassifier{
         // Set K to highest value if K is larger than number of data model
         testKLimit();
         
-//        System.out.println("New Number of Attributes: " + dataModel.numAttributes());
+        if (this.standardise){   
+            standardiseDataModelAttr();
+        } else {}
     }
     
     /**
@@ -97,58 +110,10 @@ public class KNN extends AbstractClassifier{
     }
     
     /**
-     * This function calculates the Euclidean distance between the attributes of
-     * a classified and an unclassified object and returns that value.
-     * @param data The classified training instance.
-     * @param object The unclassified instance.
-     * @return The Euclidean distance in a double format.
+     * Classifies an instances.
+     * @param object The object that is to be classified.
+     * @return The class index of the result.
      */
-    private double distance(Instance data, Instance object){
-        
-        int numOfAttr = data.numAttributes() - 1;
-        double difference = 0.0, diffSqr = 0.0, total = 0.0;
-        
-        for (int i = 0; i < numOfAttr; i++){
-            
-//            System.out.println("Classified: " + data.value(i) + "\nObject: "
-//             + object.value(i));
-            difference = object.value(i) - data.value(i);
-            diffSqr = Math.pow(difference, 2);
-            total += diffSqr;
-            
-        }
-//        System.out.println("Distance: " + total + "\n");
-        
-        return total;
-        
-    }
-    
-    /**
-     * Resets votes from previous classifications to avoid conflicts.
-     */
-    private void resetVotes(){
-        
-        for (int i = 0; i < votes.length; i++){
-            
-            votes[i] = 0;
-            
-        }
-        
-    }
-    
-    /**
-     * Checks whether K is larger than the number of data model instances
-     * and if it is, K is set to the highest value possible which is the 
-     * number of data model instances.
-     */
-    private void testKLimit(){
-        if (this.k > dataModel.numInstances()){
-            System.out.println("K was: " + this.k);
-            this.k = dataModel.numInstances();
-        }
-        System.out.println("K is: " + this.k);
-    }
-    
     @Override
     public double classifyInstance(Instance object){
         
@@ -159,6 +124,11 @@ public class KNN extends AbstractClassifier{
         int closestInstanceIndex = 0, classIndex = 0, numOfVotes = 0;
         resetVotes();   // Reset votes from previous classification
 
+        // Standardise Object
+        if (this.standardise){   
+            standardiseObject(object);
+        } else {}
+        
 //        System.out.println("Number of K: " + closestInstances.length);
         // Go through all training data K times and choose smallest distance
         for (int i = 0; i < closestInstances.length; i++){
@@ -216,6 +186,11 @@ public class KNN extends AbstractClassifier{
         return (double)classIndex;
     }
     
+    /**
+     * Calculates the distribution to which each class was voted for (0.0 - 1)
+     * @param object The object that is to be classified.
+     * @return An array of distributions for each class.
+     */
     @Override
     public double[] distributionForInstance(Instance object){
         
@@ -231,6 +206,148 @@ public class KNN extends AbstractClassifier{
         }
         
         return results;
+    }
+    
+    
+    /**
+     * This function calculates the Euclidean distance between the attributes of
+     * a classified and an unclassified object and returns that value.
+     * @param data The classified training instance.
+     * @param object The unclassified instance.
+     * @return The Euclidean distance in a double format.
+     */
+    private double distance(Instance data, Instance object){
+        
+        int numOfAttr = data.numAttributes() - 1;
+        double difference = 0.0, diffSqr = 0.0, total = 0.0;
+        
+        for (int i = 0; i < numOfAttr; i++){
+            
+//            System.out.println("Classified: " + data.value(i) + "\nObject: "
+//             + object.value(i));
+            difference = object.value(i) - data.value(i);
+            diffSqr = Math.pow(difference, 2);
+            total += diffSqr;
+            
+        }
+//        System.out.println("Distance: " + total + "\n");
+        
+        return total;
+        
+    }
+    
+    /**
+     * Resets votes from previous classifications to avoid conflicts.
+     */
+    private void resetVotes(){
+        
+        for (int i = 0; i < votes.length; i++){
+            
+            votes[i] = 0;
+            
+        }
+        
+    }
+    
+    /**
+     * Checks whether K is larger than the number of data model instances
+     * and if it is, K is set to the highest value possible which is the 
+     * number of data model instances.
+     */
+    private void testKLimit(){
+        if (this.k > dataModel.numInstances()){
+            System.out.println("K was: " + this.k);
+            this.k = dataModel.numInstances();
+        }
+//        System.out.println("K is: " + this.k);
+    }
+    
+    /**
+     * This functions standardises the attributes of the data model which makes
+     * the mean of data to be 0 and standard deviation to 1.
+     */
+    private void standardiseDataModelAttr(){
+        
+        // Ignoring the class attribute
+        int numberOfAttributes = dataModel.numAttributes() - 1;
+        calculateDataModelMean();
+        calculateDataModelSD(this.means);
+        double standardisedAttr;
+        
+        for (int i = 0; i < dataModel.numInstances(); i++){
+//            System.out.println(dataModel.get(i));
+            for (int j = 0; j < numberOfAttributes; j++){
+                standardisedAttr = (dataModel.get(i).value(j) - this.means[j])
+                        / this.standardDeviations[j];
+                dataModel.get(i).setValue(j, standardisedAttr);
+            }
+//            System.out.println(dataModel.get(i));
+        }
+        
+    }
+    
+    /**
+     * Standardises the object that has been passed to be classified.
+     * @param object Object to be classified.
+     */
+    private void standardiseObject(Instance object){
+        
+        // Ignoring the class attribute
+        int numberOfAttributes = dataModel.numAttributes() - 1;
+        double standardisedAttr;
+        
+//        System.out.println(object);
+        for (int j = 0; j < numberOfAttributes; j++){
+            standardisedAttr = (object.value(j) - this.means[j])
+                    / this.standardDeviations[j];
+            object.setValue(j, standardisedAttr);
+        }
+//        System.out.println(object);
+        
+    }
+    
+    /**
+     * Calculates the mean of attributes for the data model.
+     */
+    private void calculateDataModelMean(){
+        
+        // Ignoring the class attribute
+        int numberOfAttributes = dataModel.numAttributes() - 1;
+        this.means = new double[numberOfAttributes];
+        
+        for (int i = 0; i < dataModel.numInstances(); i++){
+            for (int j = 0; j < numberOfAttributes; j++){    
+                this.means[j] += dataModel.get(i).value(j);        
+            }
+        }
+        for (int j = 0; j < numberOfAttributes; j++){    
+            this.means[j] /= dataModel.numInstances();
+        }
+        
+    }
+    
+    /**
+     * Calculates the standard deviation of attributes for the data model.
+     * @param means An array of means for each attribute.
+     */
+    private void calculateDataModelSD(double[] means){
+        
+        // Ignoring the class attribute
+        int numberOfAttributes = dataModel.numAttributes() - 1;
+        double distanceFromMean = 0;
+        this.standardDeviations = new double[numberOfAttributes];
+        
+        for (int i = 0; i < dataModel.numInstances(); i++){
+            for (int j = 0; j < numberOfAttributes; j++){
+                distanceFromMean = dataModel.get(i).value(j) - means[j];
+                this.standardDeviations[j] += Math.pow(distanceFromMean, 2);        
+            }
+        }
+        for (int j = 0; j < numberOfAttributes; j++){    
+            this.standardDeviations[j] /= dataModel.numInstances();
+            this.standardDeviations[j] = Math.sqrt(this.standardDeviations[j]);
+        }
+        
     }
     
 }
