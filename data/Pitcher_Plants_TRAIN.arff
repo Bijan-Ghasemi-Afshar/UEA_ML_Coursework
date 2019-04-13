@@ -1,0 +1,19 @@
+@RELATION Pitcher-Plants-Width-Height
+
+@ATTRIBUTE Width  NUMERIC
+@ATTRIBUTE Height  NUMERIC
+@ATTRIBUTE class   {N.truncata, N.raja}
+@DATA
+
+9, 13, N.truncata
+5, 14, N.raja
+7, 14, N.truncata
+6, 11, N.raja
+6, 12, N.raja
+5, 12, N.raja
+8, 15, N.raja
+6, 15, N.truncata
+8, 13, N.raja
+7, 12, N.truncata
+4, 13, N.raja
+9, 16, N.truncata

@@ -21,7 +21,7 @@ import weka.core.Instances;
 public class KNN extends AbstractClassifier{
 
     // Class properties
-    private Instances trainingData;
+    private Instances dataModel;
     private int k;
     private int[] votes;
     
@@ -37,7 +37,12 @@ public class KNN extends AbstractClassifier{
      * @param k The number of closest neighbours considered for classification.
      */
     public void setK(int k){
-        this.k = k;
+        if (dataModel != null){
+            this.k = k;
+            testKLimit();
+        } else {
+            this.k = k;
+        }
     }
     
     /**
@@ -47,20 +52,23 @@ public class KNN extends AbstractClassifier{
      */
     @Override
     public void buildClassifier(Instances data) throws Exception {
-        trainingData = data;
-        votes = new int[trainingData.numClasses()];
+        dataModel = data;
+        votes = new int[dataModel.numClasses()];
         
         // Delete instances with no class value
-        trainingData.deleteWithMissingClass();
+        dataModel.deleteWithMissingClass();
         
         // Deleting attributes that are not supported (not numeric)
-        for (int i = trainingData.numAttributes() - 2; i >= 0; i--){
-            if (!getCapabilities().test(trainingData.attribute(i))){
-                trainingData.deleteAttributeAt(i);
+        for (int i = dataModel.numAttributes() - 2; i >= 0; i--){
+            if (!getCapabilities().test(dataModel.attribute(i))){
+                dataModel.deleteAttributeAt(i);
             }
         }
 
-        System.out.println("New Number of Attributes: " + trainingData.numAttributes());
+        // Set K to highest value if K is larger than number of data model
+        testKLimit();
+        
+//        System.out.println("New Number of Attributes: " + dataModel.numAttributes());
     }
     
     /**
@@ -128,13 +136,26 @@ public class KNN extends AbstractClassifier{
         
     }
     
+    /**
+     * Checks whether K is larger than the number of data model instances
+     * and if it is, K is set to the highest value possible which is the 
+     * number of data model instances.
+     */
+    private void testKLimit(){
+        if (this.k > dataModel.numInstances()){
+            System.out.println("K was: " + this.k);
+            this.k = dataModel.numInstances();
+        }
+        System.out.println("K is: " + this.k);
+    }
+    
     @Override
     public double classifyInstance(Instance object){
         
         double closestMatch, eDistance = 0.0;
         double[] newThing = new double[3];
         Instance[] closestInstances = new Instance[k];
-        Instances clonedData = new Instances(trainingData);
+        Instances clonedData = new Instances(dataModel);
         int closestInstanceIndex = 0, classIndex = 0, numOfVotes = 0;
         resetVotes();   // Reset votes from previous classification
 
@@ -198,7 +219,7 @@ public class KNN extends AbstractClassifier{
     @Override
     public double[] distributionForInstance(Instance object){
         
-        double[] results = new double[trainingData.numClasses()];
+        double[] results = new double[dataModel.numClasses()];
         
         classifyInstance(object);
         
