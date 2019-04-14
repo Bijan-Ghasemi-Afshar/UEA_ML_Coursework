@@ -42,14 +42,14 @@ public class UEA_ML_Coursework {
             Instances testData = splitedData[1];
             
             // Instantiate classifier
-            KNN oneNN = new KNN(true, true);
-            oneNN.setK(3);
-//            oneNN.setK(31);
+            KNN oneNN = new KNN(true, true, true);
+//            oneNN.setK(3);
             
             // Build the classifier using the training data
             try{
 
-                oneNN.buildClassifier(allData);
+//                oneNN.buildClassifier(allData);
+                oneNN.buildClassifier(trainData);
 
             } catch (Exception e){
 
@@ -57,15 +57,16 @@ public class UEA_ML_Coursework {
                         + e);
 
             }
-            
-//            oneNN.setK(31);
-            
+
             // Test classifiers
 //            double accuracy = oneNN.classifyInstance(testData.get(0));
-//            oneNN.distributionForInstance((testData.get(0)));
-//            double accuracy = WekaTools.accuracy(oneNN, testData);
-//            System.out.println("The One Neares Neighbor accuracy is: " 
-//                    + accuracy + "%");
+//            double[] distri = oneNN.distributionForInstance((testData.get(0)));
+//            for (int i = 0; i < distri.length; i++){
+//                System.out.println("Class " + (i + 1) + ": " + distri[i]);
+//            }
+            double accuracy = WekaTools.accuracy(oneNN, testData);
+            System.out.println("The One Neares Neighbor accuracy is: " 
+                    + accuracy + "%");
 
 //            System.out.println(oneNN.getCapabilities());
             
@@ -93,9 +94,9 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-        test1("./data/Pitcher_Plants_TRAIN.arff");
+//        test1("./data/Pitcher_Plants_TRAIN.arff");
         
-//        test1("./data/FootballPlayers.arff");
+        test1("./data/FootballPlayers.arff");
     }
     
 }

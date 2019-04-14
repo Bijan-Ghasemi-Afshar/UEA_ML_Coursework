@@ -23,10 +23,12 @@ public class KNN extends AbstractClassifier{
     private Instances dataModel;
     private boolean standardise;
     private boolean setKAuto;
+    private boolean weightedScheme;
     private double[] means;
     private double[] standardDeviations;
     private int k;
-    private int[] votes;
+    private double[] votes;
+    private int[] votesDiscrete;
     
     /**
      * Constructor for initialising the KNN object.
@@ -35,6 +37,7 @@ public class KNN extends AbstractClassifier{
         this.k = 1;
         this.standardise = true;
         this.setKAuto = false;
+        this.weightedScheme = false;
     }
     
     /**
@@ -45,18 +48,32 @@ public class KNN extends AbstractClassifier{
         this.k = 1;
         this.standardise = standardise;
         this.setKAuto = false;
+        this.weightedScheme = false;
     }
     
     /**
      * Constructor for initialising the KNN object.
      * @param standardise Flag to whether standardise values of not.
-     * * @param setK Flag to whether set K automatically through LOOCV.
+     * @param setK Flag to whether set K automatically through LOOCV.
      */
     public KNN(boolean standardise, boolean setKAuto){
         this.k = 1;
         this.standardise = standardise;
         this.setKAuto = setKAuto;
-        
+        this.weightedScheme = false;
+    }
+    
+    /**
+     * Constructor for initialising the KNN object.
+     * @param standardise Flag to whether standardise values of not.
+     * @param setKAuto Flag to whether set K automatically through LOOCV.
+     * @param weightedScheme Flag to whether use weighted voting scheme.
+     */
+    public KNN(boolean standardise, boolean setKAuto, boolean weightedScheme){
+        this.k = 1;
+        this.standardise = standardise;
+        this.setKAuto = setKAuto;
+        this.weightedScheme = weightedScheme;
     }
     
     /**
@@ -80,7 +97,8 @@ public class KNN extends AbstractClassifier{
     @Override
     public void buildClassifier(Instances data) throws Exception {
         dataModel = data;
-        votes = new int[dataModel.numClasses()];
+        votes = new double[dataModel.numClasses()];
+        votesDiscrete = new int[dataModel.numClasses()];
         
         // Delete instances with no class value
         dataModel.deleteWithMissingClass();
@@ -98,13 +116,12 @@ public class KNN extends AbstractClassifier{
         // Standardise attributes if flag is set
         if (standardise){   
             standardiseDataModelAttr();
-        } else {}
-        
+        }
         // Set K through LOOCV
         if (setKAuto){
             setKWithLOOCV();
-        } else {}
-        
+        } 
+        System.out.println("K is " + k);
     }
     
     /**
@@ -143,15 +160,15 @@ public class KNN extends AbstractClassifier{
         double closestMatch, eDistance = 0.0;
         Instance[] closestInstances = new Instance[k];
         Instances clonedData = new Instances(dataModel);
-        int closestInstanceIndex = 0, classIndex = 0, numOfVotes = 0;
+        int closestInstanceIndex = 0, classIndex = 0;
+        double numOfVotes = 0.0;
         resetVotes();   // Reset votes from previous classification
 
         // Standardise Object
         if (this.standardise){   
             standardiseObject(object);
-        } else {}
+        }
         
-//        System.out.println("Number of K: " + closestInstances.length);
         // Go through all training data K times and choose smallest distance
         for (int i = 0; i < closestInstances.length; i++){
             
@@ -160,17 +177,12 @@ public class KNN extends AbstractClassifier{
             for (int j = 0; j < clonedData.numInstances(); j++){
                 
                 eDistance = distance(clonedData.instance(j), object);
-//                System.out.println(eDistance);
                 // If distances are same choose randomly
                 if (eDistance == closestMatch){
-//                    System.out.println("Have to random between : " 
-//                            + closestInstanceIndex + " and " + j);
                     if (Math.random() < 0.5){
-//                        System.out.println("Chose " + j);
                         closestInstances[i] = clonedData.instance(j);
                         closestInstanceIndex = j;
                     }
-                    
                 } else if (eDistance < closestMatch){
                     closestMatch = eDistance;
                     closestInstances[i] = clonedData.instance(j);
@@ -179,31 +191,32 @@ public class KNN extends AbstractClassifier{
 
             }
             clonedData.delete(closestInstanceIndex);
-//            System.out.println("Closest Match: " + closestMatch);
             classIndex = (int)(closestInstances[i].classValue());
-            votes[classIndex]++;
+            if(weightedScheme){
+                votes[classIndex] += 1 / (1 + closestMatch);
+                votesDiscrete[classIndex]++;
+//                System.out.println("Weighted: " + 1 / (1 + closestMatch));
+            } else {
+                votes[classIndex]++;
+                votesDiscrete[classIndex]++;
+            }
         }
         
         // Count the votes
         classIndex = 0;
         for (int i = 0; i < votes.length; i++){
-//            System.out.println(i + " " + votes[i]);
+//            System.out.println("Class " + (i+1) + ": " + votes[i] + "\n");
             // If distances are same choose randomly
-                if (numOfVotes == votes[i]){
-//                    System.out.println("class value random  : " 
-//                            + classIndex + " and " + i);
-                    if (Math.random() < 0.5){
-//                        System.out.println("Chose " + i);
-                        numOfVotes = votes[i];
-                        classIndex = i;
-                    }
-                    
-                } else if (numOfVotes < votes[i]){
+            if (numOfVotes == votes[i]){
+                if (Math.random() < 0.5){
+                    numOfVotes = votes[i];
+                    classIndex = i;
+                }
+            } else if (numOfVotes < votes[i]){
                 numOfVotes = votes[i];
                 classIndex = i;
             }
         }
-//        System.out.println(classIndex);
         
         return (double)classIndex;
     }
@@ -223,7 +236,7 @@ public class KNN extends AbstractClassifier{
         for (int i = 0; i < results.length; i++){
             
 //            System.out.println(votes[i] + " " + k);
-            results[i] = (double)votes[i]/(double)k;
+            results[i] = (double)votesDiscrete[i]/(double)k;
 //            System.out.println("Vote " + i + ": " + results[i]);
         }
         
@@ -263,9 +276,7 @@ public class KNN extends AbstractClassifier{
     private void resetVotes(){
         
         for (int i = 0; i < votes.length; i++){
-            
-            votes[i] = 0;
-            
+            votes[i] = 0.0;
         }
         
     }
@@ -385,7 +396,6 @@ public class KNN extends AbstractClassifier{
         // The size of training data is always 1 fewer than original
         int[] kRange = setKRange(dataModel.numInstances() - 1);
         int[] kAccuracies = new int[kRange.length];
-        
         // For each instance set it to test and the rest to train
         for (int i = 0; i<originalDataModel.numInstances(); i++){
             dataModel = new Instances(originalDataModel);
@@ -418,8 +428,6 @@ public class KNN extends AbstractClassifier{
         
         // Set K to the highest accuracy
         this.k = (highestKIndex + 1);
-        
-        System.out.println("K with highest accuracy: " + k);
 
     }
     
