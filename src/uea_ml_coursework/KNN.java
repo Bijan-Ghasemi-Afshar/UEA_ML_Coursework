@@ -195,7 +195,6 @@ public class KNN extends AbstractClassifier{
             if(weightedScheme){
                 votes[classIndex] += 1 / (1 + closestMatch);
                 votesDiscrete[classIndex]++;
-//                System.out.println("Weighted: " + 1 / (1 + closestMatch));
             } else {
                 votes[classIndex]++;
                 votesDiscrete[classIndex]++;
@@ -205,7 +204,6 @@ public class KNN extends AbstractClassifier{
         // Count the votes
         classIndex = 0;
         for (int i = 0; i < votes.length; i++){
-//            System.out.println("Class " + (i+1) + ": " + votes[i] + "\n");
             // If distances are same choose randomly
             if (numOfVotes == votes[i]){
                 if (Math.random() < 0.5){
@@ -234,10 +232,7 @@ public class KNN extends AbstractClassifier{
         classifyInstance(object);
         
         for (int i = 0; i < results.length; i++){
-            
-//            System.out.println(votes[i] + " " + k);
             results[i] = (double)votesDiscrete[i]/(double)k;
-//            System.out.println("Vote " + i + ": " + results[i]);
         }
         
         return results;
@@ -277,6 +272,7 @@ public class KNN extends AbstractClassifier{
         
         for (int i = 0; i < votes.length; i++){
             votes[i] = 0.0;
+            votesDiscrete[i] = 0;
         }
         
     }

@@ -12,78 +12,78 @@ import weka.tools.WekaTools;
  * @author Bijan Ghasemi Afshar (100125463)
  */
 public class UEA_ML_Coursework {
-
-    public static void test1(String dataLocation){
+    
+    /**
+     * Tests the results of Part 1
+     * @param dataLocation The location of the file containing Train File
+     */
+    public static void testPart1(String dataLocation){
         
-        Instances allData = null;
+        Instances trainData = null, testData = null;
         
         // Loading the data
         try{
-            allData = WekaTools.loadData(dataLocation);
+            trainData = WekaTools.loadData(dataLocation);
         } catch (Exception e){
             System.out.println("There was an issue loading the data \n" + e );
         }
         
-        if (allData != null){
+        if (trainData != null){
             
             // Print dataset information
-            System.out.println("Attributes: " + allData.numAttributes() 
-                    + "\nInstances: " + allData.numInstances() + 
-                    "\nClasses: " + allData.numClasses());
-            double[] classDist = WekaTools.classDistribution(allData);
+            System.out.println("------Training data properties------");
+            System.out.println("Attributes: " + (trainData.numAttributes() - 1)
+                    + "\nInstances: " + trainData.numInstances() + 
+                    "\nClasses: " + trainData.numClasses());
+            double[] classDist = WekaTools.classDistribution(trainData);
             for (int i = 0; i < classDist.length; i++){
                 System.out.println("Class index " + i + " distribution: "
                         + classDist[i]);
             }
-            
-            // Spliting the data
-            Instances[] splitedData = WekaTools.splitData(allData, 0.3);
-            Instances trainData = splitedData[0];
-            Instances testData = splitedData[1];
+            System.out.println("");
             
             // Instantiate classifier
-            KNN oneNN = new KNN(true, true, true);
-//            oneNN.setK(3);
+            KNN knn = new KNN();
+            knn.setK(3);
             
             // Build the classifier using the training data
             try{
-
-//                oneNN.buildClassifier(allData);
-                oneNN.buildClassifier(trainData);
-
+                knn.buildClassifier(trainData);
             } catch (Exception e){
-
-                System.out.println("There was an issue building classifier\n" 
+                System.out.println("There was an issue building classifier\n"
                         + e);
-
+            }
+            
+            // Classifying the unclassified objects from Part 1
+            try {
+                testData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff");
+            } catch (Exception e){
+                System.out.println("Error loading test data\n" + e);
+            }
+            
+            // Classify test data and show distribution for each class
+            // Clone test data for getting the distribution 
+            // to avoid re-standardising
+            /** Expected Results
+             * 8, 12, N.truncata | 0.66 | Standardised 
+             * 7, 15, N.truncata | 0.66 | Standardised
+             * 6, 14, N.truncata | 0.66 | Standardised
+             * 5, 13, N.raja     | 1.0  | Standardised
+             */
+            System.out.println("------Classification Results------");
+            Instances clonedTest = new Instances (testData);
+            double[] instDist = new double[trainData.numClasses()];
+            for (int i = 0; i < testData.numInstances(); i++){
+                System.out.println("\n" + testData.get(i));
+                System.out.println("Result: " + 
+                        trainData.classAttribute().value((int)knn.classifyInstance(testData.get(i))));
+                System.out.println(testData.get(i));
+                instDist = knn.distributionForInstance(clonedTest.get(i));
+                for (int j = 0; j < instDist.length; j++){
+                    System.out.println("Class " + (j+1) + ": " + instDist[j]);
+                }
             }
 
-            // Test classifiers
-//            double accuracy = oneNN.classifyInstance(testData.get(0));
-//            double[] distri = oneNN.distributionForInstance((testData.get(0)));
-//            for (int i = 0; i < distri.length; i++){
-//                System.out.println("Class " + (i + 1) + ": " + distri[i]);
-//            }
-            double accuracy = WekaTools.accuracy(oneNN, testData);
-            System.out.println("The One Neares Neighbor accuracy is: " 
-                    + accuracy + "%");
-
-//            System.out.println(oneNN.getCapabilities());
-            
-            // Test Data
-//            try{
-//                allData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff");
-//            } catch (Exception e){
-//                System.out.println("There was an issue loading the data \n" + e );
-//            }
-//            
-//            int[] results = WekaTools.classifyInstances(oneNN, allData);
-//            
-//            for (int i = 0; i < results.length; i++){
-//                System.out.println(allData.get(i));
-//                System.out.println(allData.classAttribute().value(results[i]));
-//            }
-            
         }
         
     }
@@ -94,9 +94,8 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-//        test1("./data/Pitcher_Plants_TRAIN.arff");
-        
-        test1("./data/FootballPlayers.arff");
+        testPart1("./data/Pitcher_Plants_TRAIN.arff");
+
     }
     
 }
