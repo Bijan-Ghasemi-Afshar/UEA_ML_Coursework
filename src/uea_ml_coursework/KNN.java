@@ -6,11 +6,12 @@
  */
 package uea_ml_coursework;
 
+import java.util.Arrays;
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.Classifier;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.filters.unsupervised.attribute.Standardize;
 
 /**
  * 10/04/2019
@@ -21,6 +22,7 @@ public class KNN extends AbstractClassifier{
     // Class properties
     private Instances dataModel;
     private boolean standardise;
+    private boolean setKAuto;
     private double[] means;
     private double[] standardDeviations;
     private int k;
@@ -32,6 +34,7 @@ public class KNN extends AbstractClassifier{
     public KNN(){
         this.k = 1;
         this.standardise = true;
+        this.setKAuto = false;
     }
     
     /**
@@ -41,6 +44,19 @@ public class KNN extends AbstractClassifier{
     public KNN(boolean standardise){
         this.k = 1;
         this.standardise = standardise;
+        this.setKAuto = false;
+    }
+    
+    /**
+     * Constructor for initialising the KNN object.
+     * @param standardise Flag to whether standardise values of not.
+     * * @param setK Flag to whether set K automatically through LOOCV.
+     */
+    public KNN(boolean standardise, boolean setKAuto){
+        this.k = 1;
+        this.standardise = standardise;
+        this.setKAuto = setKAuto;
+        
     }
     
     /**
@@ -78,10 +94,17 @@ public class KNN extends AbstractClassifier{
 
         // Set K to highest value if K is larger than number of data model
         testKLimit();
-        
-        if (this.standardise){   
+     
+        // Standardise attributes if flag is set
+        if (standardise){   
             standardiseDataModelAttr();
         } else {}
+        
+        // Set K through LOOCV
+        if (setKAuto){
+            setKWithLOOCV();
+        } else {}
+        
     }
     
     /**
@@ -118,7 +141,6 @@ public class KNN extends AbstractClassifier{
     public double classifyInstance(Instance object){
         
         double closestMatch, eDistance = 0.0;
-        double[] newThing = new double[3];
         Instance[] closestInstances = new Instance[k];
         Instances clonedData = new Instances(dataModel);
         int closestInstanceIndex = 0, classIndex = 0, numOfVotes = 0;
@@ -207,7 +229,6 @@ public class KNN extends AbstractClassifier{
         
         return results;
     }
-    
     
     /**
      * This function calculates the Euclidean distance between the attributes of
@@ -347,6 +368,84 @@ public class KNN extends AbstractClassifier{
             this.standardDeviations[j] /= dataModel.numInstances();
             this.standardDeviations[j] = Math.sqrt(this.standardDeviations[j]);
         }
+        
+    }
+ 
+    /**
+     * Set K automatically through Leave-One Out Cross Validation. This is done
+     * by storing the original dataset in a temporary variable and manipulating
+     * the current instance of the classifier, and finally setting back the 
+     * current instance to the original dataset.
+     */
+    private void setKWithLOOCV(){
+        
+        Instance test;
+        Instances train, originalDataModel = new Instances(dataModel);
+        int accuracy = 0, highestAccuracy = 0, highestKIndex = 0;
+        // The size of training data is always 1 fewer than original
+        int[] kRange = setKRange(dataModel.numInstances() - 1);
+        int[] kAccuracies = new int[kRange.length];
+        
+        // For each instance set it to test and the rest to train
+        for (int i = 0; i<originalDataModel.numInstances(); i++){
+            dataModel = new Instances(originalDataModel);
+            test = dataModel.get(i);
+            dataModel.delete(i);
+            // Test the accuracy for every value of K (1-Kmax)
+            for (int j = 0; j < kRange.length; j++){
+                this.k = kRange[j];
+                if (test.classValue() == classifyInstance(test)){
+                    kAccuracies[j]++;
+                }
+            }
+        }
+        
+        // Find the highest accuracy of K and settle ties randomly
+        for (int i = 0; i < kAccuracies.length; i++){
+            if (kAccuracies[i] == highestAccuracy){
+                if (Math.random() < 0.5){
+                    highestAccuracy = kAccuracies[i];
+                    highestKIndex = i;
+                }
+            } else if (kAccuracies[i] > highestAccuracy){
+                highestAccuracy = kAccuracies[i];
+                highestKIndex = i;
+            }
+        }
+        
+        // Set data model back to the original dataset
+        dataModel = new Instances(originalDataModel);
+        
+        // Set K to the highest accuracy
+        this.k = (highestKIndex + 1);
+        
+        System.out.println("K with highest accuracy: " + k);
+
+    }
+    
+    /**
+     * Sets the range of Ks when automatically setting K through LOOCV.
+     * @param trainSize The size of the training data.
+     * @return An arrays of Ks from 1 to Max K
+     */
+    private int[] setKRange(int trainSize){
+        
+        int[] kRange;
+        // Calculate 20% of tarin data (increase 1 if it's even)
+        int train20Perc = (int)(trainSize * 0.2);
+        train20Perc = (train20Perc % 2 == 0) ? train20Perc : train20Perc++;
+        
+        if (train20Perc > 100){
+            kRange = new int[100];
+        } else {
+            kRange = new int[train20Perc];
+        }
+        
+        for (int i = 0; i < kRange.length; i++){
+            kRange[i] = i + 1;
+        }
+        
+        return kRange;
         
     }
     

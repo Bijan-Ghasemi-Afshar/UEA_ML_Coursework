@@ -42,7 +42,7 @@ public class UEA_ML_Coursework {
             Instances testData = splitedData[1];
             
             // Instantiate classifier
-            KNN oneNN = new KNN();
+            KNN oneNN = new KNN(true, true);
             oneNN.setK(3);
 //            oneNN.setK(31);
             
@@ -70,18 +70,18 @@ public class UEA_ML_Coursework {
 //            System.out.println(oneNN.getCapabilities());
             
             // Test Data
-            try{
-                allData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff");
-            } catch (Exception e){
-                System.out.println("There was an issue loading the data \n" + e );
-            }
-            
-            int[] results = WekaTools.classifyInstances(oneNN, allData);
-            
-            for (int i = 0; i < results.length; i++){
-                System.out.println(allData.get(i));
-                System.out.println(allData.classAttribute().value(results[i]));
-            }
+//            try{
+//                allData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff");
+//            } catch (Exception e){
+//                System.out.println("There was an issue loading the data \n" + e );
+//            }
+//            
+//            int[] results = WekaTools.classifyInstances(oneNN, allData);
+//            
+//            for (int i = 0; i < results.length; i++){
+//                System.out.println(allData.get(i));
+//                System.out.println(allData.classAttribute().value(results[i]));
+//            }
             
         }
         
@@ -95,6 +95,7 @@ public class UEA_ML_Coursework {
         
         test1("./data/Pitcher_Plants_TRAIN.arff");
         
+//        test1("./data/FootballPlayers.arff");
     }
     
 }
