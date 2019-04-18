@@ -123,6 +123,21 @@ public class KNN extends AbstractClassifier{
     }
     
     /**
+     * Accessor for weighted vote values.
+     * @param object The object to be classified.
+     * @return The array containing weighted voting values. Returns null if 
+     * weightedVotes is set to true.
+     */
+    public double[] getWeightedVotes(Instance object){
+        classifyInstance(object);
+        if (this.weightedScheme){
+            return this.votes;
+        } else {
+            return null;
+        }
+    }
+    
+    /**
      * Builds the classifier by storing the training data.
      * @param data The classified training data
      * @throws Exception 
@@ -206,7 +221,6 @@ public class KNN extends AbstractClassifier{
         if (this.standardise){   
             standardiseObject(clonedObject);
         }
-        
         
         // Go through all training data K times and choose smallest distance
         for (int i = 0; i < closestInstances.length; i++){

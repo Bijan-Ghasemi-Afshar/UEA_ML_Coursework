@@ -30,6 +30,8 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
+            System.out.println("------Testing The Results of Part 1------");
+            
             // Print dataset information
             WekaTools.printDatasetInfo(trainData);
             
@@ -93,6 +95,8 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
+            System.out.println("------Testing Standardisation------");
+            
             // Print dataset information
             WekaTools.printDatasetInfo(trainData);
             
@@ -154,13 +158,62 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
+            System.out.println("------Testing Automated Setting of K------");
+            
             // Print dataset information
             WekaTools.printDatasetInfo(trainData);
             
             // Instantiate classifier
-            KNN knn = new KNN();
+            KNN knn = new KNN(true, true);
+            
+            // Build the classifier using the training data
+            try{
+                knn.buildClassifier(trainData);
+            } catch (Exception e){
+                System.out.println("There was an issue building classifier\n"
+                        + e);
+            }
+            
+            // Set K automatically through LOOCV
+            /**
+             * Expected Results.
+             * Range of K: 1-2 (Kmax = 12 * 0.2 = 2)
+             * Since when using K=2 uses randomness when there are ties between
+             * instances, there might be times where K=2 produces higher resutls
+             * Result of K: 1 or 2
+             */
+            System.out.println("------Automated Setting of K Result------");
+            System.out.println("Setting Automatically K: " + knn.getSetKAuto());
+            System.out.println("K is: " + knn.getK());
+            
+        }
+    }
+    
+    /**
+     * Tests the functionality that uses a weighted scheme for voting.
+     * @param dataLocation The location of the file that contains training data.
+     */
+    public static void testWeightedScheme(String dataLocation){
+        
+        Instances trainData = null, testData = null;
+        
+        // Loading the data
+        try{
+            trainData = WekaTools.loadData(dataLocation, false);
+        } catch (Exception e){
+            System.out.println("There was an issue loading the data \n" + e );
+        }
+        
+        if (trainData != null){
+        
+            System.out.println("------Testing Weighted Voting Scheme------");
+            
+            // Print dataset information
+            WekaTools.printDatasetInfo(trainData);
+            
+            // Instantiate classifier
+            KNN knn = new KNN(true, false, true);
             knn.setK(3);
-            System.out.println("K: " + knn.getK());
             
             // Build the classifier using the training data
             try{
@@ -178,29 +231,26 @@ public class UEA_ML_Coursework {
                 System.out.println("Error loading test data\n" + e);
             }
             
-            // Classify test data and show distribution for each class
-            // Clone test data for getting the distribution 
-            // to avoid re-standardising
-            /** Expected Results
-             * 5, 13, N.raja     | 1.0  | Standardised
-             * 6, 14, N.truncata | 0.66 | Standardised
-             * 7, 15, N.truncata | 0.66 | Standardised
-             * 8, 12, N.truncata | 0.66 | Standardised
+            // Uses the weighted voting scheme for classification.
+            /**
+             * Expected Results.
+             * 5, 13, N.raja     | Votes class 0: 0.0  | Votes class 0: 2.05
+             * 6, 14, N.truncata | Votes class 0: 1.37  | Votes class 0: 0.7
+             * 7, 15, N.truncata | Votes class 0: 1.37  | Votes class 0: 0.7
+             * 8, 12, N.truncata | Votes class 0: 1.22  | Votes class 0: 0.67
              */
-            System.out.println("------Classification Results------");
-            double[] instDist = new double[trainData.numClasses()];
+            System.out.println("------Results of Classification------");
+            System.out.println("Use weighted voting scheme: " 
+                    + knn.getWeightedScheme());
             for (int i = 0; i < testData.numInstances(); i++){
                 System.out.println("\n" + testData.get(i));
-                System.out.println("Result: " + 
-                        trainData.classAttribute().value((int)knn.classifyInstance(testData.get(i))));
-                instDist = knn.distributionForInstance(testData.get(i));
-                for (int j = 0; j < instDist.length; j++){
-                    System.out.println("Class " + (j+1) + ": " + instDist[j]);
+                double[] weightedVotes = knn.getWeightedVotes(testData.get(i));
+                for (int j = 0; j < weightedVotes.length; j++){
+                    System.out.println("Votes for class " + j + ": " 
+                            + weightedVotes[j]);
                 }
             }
-
         }
-        
     }
     
     /**
@@ -209,12 +259,13 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-        testPart1("./data/Pitcher_Plants_TRAIN.arff");
+//        testPart1("./data/Pitcher_Plants_TRAIN.arff");
         
 //        testStandardisation("./data/Pitcher_Plants_TRAIN.arff");
 
 //        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");
 
+        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff");
     }
     
 }
