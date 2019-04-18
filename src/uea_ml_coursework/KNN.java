@@ -90,6 +90,38 @@ public class KNN extends AbstractClassifier{
     }
     
     /**
+     * Accessor for K.
+     * @return The value of K.
+     */
+    public int getK(){
+        return this.k;
+    }
+    
+    /**
+     * Accessor for standardise value.
+     * @return The boolean value of standardise.
+     */
+    public boolean getStandardise(){
+        return this.standardise;
+    }
+    
+    /**
+     * Accessor for setKAuto.
+     * @return The boolean value of setKAuto.
+     */
+    public boolean getSetKAuto(){
+        return this.setKAuto;
+    }
+    
+    /**
+     * Accessor for weightedScheme.
+     * @return The boolean value of weightedScheme.
+     */
+    public boolean getWeightedScheme(){
+        return this.weightedScheme;
+    }
+    
+    /**
      * Builds the classifier by storing the training data.
      * @param data The classified training data
      * @throws Exception 
@@ -120,8 +152,7 @@ public class KNN extends AbstractClassifier{
         // Set K through LOOCV
         if (setKAuto){
             setKWithLOOCV();
-        } 
-        System.out.println("K is " + k);
+        }
     }
     
     /**
@@ -296,24 +327,52 @@ public class KNN extends AbstractClassifier{
      */
     private void standardiseDataModelAttr(){
         
+        // If data is already standardised, don't standardise
+        if(isStandardised()){
+            System.out.println("Data is already standardised");
+            return;
+        }
+        
         // Ignoring the class attribute
         int numberOfAttributes = dataModel.numAttributes() - 1;
-        calculateDataModelMean();
-        calculateDataModelSD(this.means);
+        this.means = calculateDataModelMean();
+        this.standardDeviations =  calculateDataModelSD(this.means);
         double standardisedAttr;
         
         for (int i = 0; i < dataModel.numInstances(); i++){
-//            System.out.println(dataModel.get(i));
             for (int j = 0; j < numberOfAttributes; j++){
                 standardisedAttr = (dataModel.get(i).value(j) - this.means[j])
                         / this.standardDeviations[j];
                 dataModel.get(i).setValue(j, standardisedAttr);
             }
-//            System.out.println(dataModel.get(i));
         }
-        
     }
     
+    /**
+     * Checks whether training data is already standardised or not.
+     * @return True if means and SDs of attributes are zero and 1,
+     * false otherwise.
+     */
+    private boolean isStandardised(){
+        
+        double[] tempMeans = calculateDataModelMean();
+        double[] tempSDs = calculateDataModelSD(tempMeans);
+        
+        for (int i = 0; i < tempMeans.length; i++){
+            if ((int)tempMeans[i] == 0){
+                return true;
+            }
+        }
+        
+        for (int i = 0; i < tempSDs.length; i++){
+            if (tempSDs[i] == 1){
+                return true;
+            }
+        }
+        
+        return false;
+    }
+   
     /**
      * Standardises the object that has been passed to be classified.
      * @param object Object to be classified.
@@ -324,58 +383,59 @@ public class KNN extends AbstractClassifier{
         int numberOfAttributes = dataModel.numAttributes() - 1;
         double standardisedAttr;
         
-//        System.out.println(object);
         for (int j = 0; j < numberOfAttributes; j++){
             standardisedAttr = (object.value(j) - this.means[j])
                     / this.standardDeviations[j];
             object.setValue(j, standardisedAttr);
         }
-//        System.out.println(object);
         
     }
     
     /**
      * Calculates the mean of attributes for the data model.
      */
-    private void calculateDataModelMean(){
+    private double[] calculateDataModelMean(){
         
         // Ignoring the class attribute
         int numberOfAttributes = dataModel.numAttributes() - 1;
-        this.means = new double[numberOfAttributes];
+        double[] tempMeans = new double[numberOfAttributes];
         
         for (int i = 0; i < dataModel.numInstances(); i++){
             for (int j = 0; j < numberOfAttributes; j++){    
-                this.means[j] += dataModel.get(i).value(j);        
+                tempMeans[j] += dataModel.get(i).value(j);
             }
         }
+        
         for (int j = 0; j < numberOfAttributes; j++){    
-            this.means[j] /= dataModel.numInstances();
+            tempMeans[j] /= dataModel.numInstances();
         }
         
+        return tempMeans;
     }
     
     /**
      * Calculates the standard deviation of attributes for the data model.
      * @param means An array of means for each attribute.
      */
-    private void calculateDataModelSD(double[] means){
+    private double[] calculateDataModelSD(double[] means){
         
         // Ignoring the class attribute
         int numberOfAttributes = dataModel.numAttributes() - 1;
         double distanceFromMean = 0;
-        this.standardDeviations = new double[numberOfAttributes];
+        double[] tempSDs = new double[numberOfAttributes];
         
         for (int i = 0; i < dataModel.numInstances(); i++){
             for (int j = 0; j < numberOfAttributes; j++){
                 distanceFromMean = dataModel.get(i).value(j) - means[j];
-                this.standardDeviations[j] += Math.pow(distanceFromMean, 2);        
+                tempSDs[j] += Math.pow(distanceFromMean, 2);        
             }
         }
         for (int j = 0; j < numberOfAttributes; j++){    
-            this.standardDeviations[j] /= dataModel.numInstances();
-            this.standardDeviations[j] = Math.sqrt(this.standardDeviations[j]);
+            tempSDs[j] /= dataModel.numInstances();
+            tempSDs[j] = Math.sqrt(tempSDs[j]);
         }
         
+        return tempSDs;
     }
  
     /**
