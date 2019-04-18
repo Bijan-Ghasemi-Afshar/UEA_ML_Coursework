@@ -10,6 +10,7 @@ import java.util.Arrays;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.Capabilities;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -188,6 +189,7 @@ public class KNN extends AbstractClassifier{
     @Override
     public double classifyInstance(Instance object){
         
+        Instance clonedObject = new DenseInstance(object.numAttributes());
         double closestMatch, eDistance = 0.0;
         Instance[] closestInstances = new Instance[k];
         Instances clonedData = new Instances(dataModel);
@@ -195,10 +197,16 @@ public class KNN extends AbstractClassifier{
         double numOfVotes = 0.0;
         resetVotes();   // Reset votes from previous classification
 
+        // Create a clone of object intance to avoid re-standardising
+        for (int i = 0; i < object.numAttributes(); i++){
+            clonedObject.setValue(i, object.value(i));
+        }
+        
         // Standardise Object
         if (this.standardise){   
-            standardiseObject(object);
+            standardiseObject(clonedObject);
         }
+        
         
         // Go through all training data K times and choose smallest distance
         for (int i = 0; i < closestInstances.length; i++){
@@ -207,7 +215,7 @@ public class KNN extends AbstractClassifier{
             
             for (int j = 0; j < clonedData.numInstances(); j++){
                 
-                eDistance = distance(clonedData.instance(j), object);
+                eDistance = distance(clonedData.instance(j), clonedObject);
                 // If distances are same choose randomly
                 if (eDistance == closestMatch){
                     if (Math.random() < 0.5){
@@ -388,7 +396,6 @@ public class KNN extends AbstractClassifier{
                     / this.standardDeviations[j];
             object.setValue(j, standardisedAttr);
         }
-        
     }
     
     /**

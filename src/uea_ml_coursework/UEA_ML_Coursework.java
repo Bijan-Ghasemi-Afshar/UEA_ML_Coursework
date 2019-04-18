@@ -63,21 +63,17 @@ public class UEA_ML_Coursework {
              * 8, 12, N.truncata | 0.66 | Standardised
              */
             System.out.println("------Classification Results------");
-            Instances clonedTest = new Instances (testData);
             double[] instDist = new double[trainData.numClasses()];
             for (int i = 0; i < testData.numInstances(); i++){
                 System.out.println("\n" + testData.get(i));
                 System.out.println("Result: " + 
                         trainData.classAttribute().value((int)knn.classifyInstance(testData.get(i))));
-                System.out.println(testData.get(i));
-                instDist = knn.distributionForInstance(clonedTest.get(i));
+                instDist = knn.distributionForInstance(testData.get(i));
                 for (int j = 0; j < instDist.length; j++){
                     System.out.println("Class " + (j+1) + ": " + instDist[j]);
                 }
             }
-
         }
-        
     }
     
     /**
@@ -192,14 +188,12 @@ public class UEA_ML_Coursework {
              * 8, 12, N.truncata | 0.66 | Standardised
              */
             System.out.println("------Classification Results------");
-            Instances clonedTest = new Instances (testData);
             double[] instDist = new double[trainData.numClasses()];
             for (int i = 0; i < testData.numInstances(); i++){
                 System.out.println("\n" + testData.get(i));
                 System.out.println("Result: " + 
                         trainData.classAttribute().value((int)knn.classifyInstance(testData.get(i))));
-                System.out.println(testData.get(i));
-                instDist = knn.distributionForInstance(clonedTest.get(i));
+                instDist = knn.distributionForInstance(testData.get(i));
                 for (int j = 0; j < instDist.length; j++){
                     System.out.println("Class " + (j+1) + ": " + instDist[j]);
                 }
@@ -215,11 +209,11 @@ public class UEA_ML_Coursework {
      */
     public static void main(String[] args) {
         
-//        testPart1("./data/Pitcher_Plants_TRAIN.arff");
+        testPart1("./data/Pitcher_Plants_TRAIN.arff");
         
 //        testStandardisation("./data/Pitcher_Plants_TRAIN.arff");
 
-        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");
+//        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");
 
     }
     
