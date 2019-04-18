@@ -18,7 +18,7 @@ import weka.core.Instances;
  * 10/04/2019
  * @author Bijan Ghasemi Afshar (100125463)
  */
-public class KNN extends AbstractClassifier{
+public class KNN extends AbstractClassifier {
 
     // Class properties
     private Instances dataModel;
@@ -88,6 +88,36 @@ public class KNN extends AbstractClassifier{
         } else {
             this.k = k;
         }
+    }
+    
+    /**
+     * Accessor method for setting the flag of standardise.
+     * @param standardise The user flag.
+     */
+    public void setStandardise(boolean standardise){
+        this.standardise = true;
+        if (standardise){
+            standardiseDataModelAttr();
+        }
+    }
+    
+    /**
+     * Accessor method for setting the flag of setSetKAuto.
+     * @param setKAuto The user flag.
+     */
+    public void setSetKAuto(boolean setKAuto){
+        this.setKAuto = setKAuto;
+        if (setKAuto){
+            setKWithLOOCV();
+        }
+    }
+    
+    /**
+     * Accessor method for setting the flag of weightedScheme.
+     * @param weightedScheme The user flag.
+     */
+    public void setWeightedScheme(boolean weightedScheme){
+        this.weightedScheme = weightedScheme;
     }
     
     /**

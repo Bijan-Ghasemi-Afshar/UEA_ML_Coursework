@@ -136,7 +136,6 @@ public class UEA_ML_Coursework {
              */
             System.out.println("------Standardisation Results------");
             System.out.println(trainData);
-
         }
         
     }
@@ -164,7 +163,7 @@ public class UEA_ML_Coursework {
             WekaTools.printDatasetInfo(trainData);
             
             // Instantiate classifier
-            KNN knn = new KNN(true, true);
+            KNN knn = new KNN();
             
             // Build the classifier using the training data
             try{
@@ -185,7 +184,6 @@ public class UEA_ML_Coursework {
             System.out.println("------Automated Setting of K Result------");
             System.out.println("Setting Automatically K: " + knn.getSetKAuto());
             System.out.println("K is: " + knn.getK());
-            
         }
     }
     
@@ -245,9 +243,11 @@ public class UEA_ML_Coursework {
             for (int i = 0; i < testData.numInstances(); i++){
                 System.out.println("\n" + testData.get(i));
                 double[] weightedVotes = knn.getWeightedVotes(testData.get(i));
-                for (int j = 0; j < weightedVotes.length; j++){
-                    System.out.println("Votes for class " + j + ": " 
-                            + weightedVotes[j]);
+                if (weightedVotes != null){
+                    for (int j = 0; j < weightedVotes.length; j++){
+                        System.out.println("Votes for class " + j + ": " 
+                                + weightedVotes[j]);
+                    }
                 }
             }
         }
@@ -263,9 +263,9 @@ public class UEA_ML_Coursework {
         
 //        testStandardisation("./data/Pitcher_Plants_TRAIN.arff");
 
-//        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");
+//        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");;
 
-        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff");
+        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff");;
     }
     
 }
