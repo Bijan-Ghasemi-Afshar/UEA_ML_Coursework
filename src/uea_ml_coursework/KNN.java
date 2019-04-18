@@ -303,7 +303,7 @@ public class KNN extends AbstractClassifier {
     }
     
     /**
-     * Calculates the distribution to which each class was voted for (0.0 - 1)
+     * Calculates the distribution to which each class was voted for (0.0 - 1.0)
      * @param object The object that is to be classified.
      * @return An array of distributions for each class.
      */
