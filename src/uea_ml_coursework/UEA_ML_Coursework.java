@@ -6,6 +6,8 @@ package uea_ml_coursework;
 
 import weka.core.Instances;
 import weka.tools.WekaTools;
+import static weka.tools.WekaTools.confusionMatrix;
+import static weka.tools.WekaTools.printConfusionMatrix;
 
 /**
  * 10/04/2019
@@ -16,8 +18,9 @@ public class UEA_ML_Coursework {
     /**
      * Tests the results of Part 1
      * @param dataLocation The location of the file containing Train File
+     * @param testDataLocation The location of the file containing Test File
      */
-    public static void testPart1(String dataLocation){
+    public static void testPart1(String dataLocation, String testDataLocation){
         
         Instances trainData = null, testData = null;
         
@@ -30,9 +33,10 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
-            System.out.println("------Testing The Results of Part 1------");
+            System.out.println("------Testing The Results of Part 1------\n");
             
             // Print dataset information
+            System.out.println("------Training data properties------");
             WekaTools.printDatasetInfo(trainData);
             
             // Instantiate classifier
@@ -49,15 +53,12 @@ public class UEA_ML_Coursework {
             
             // Classifying the unclassified objects from Part 1
             try {
-                testData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff", 
-                        false);
+                testData = WekaTools.loadData(testDataLocation, false);
             } catch (Exception e){
                 System.out.println("Error loading test data\n" + e);
             }
             
             // Classify test data and show distribution for each class
-            // Clone test data for getting the distribution 
-            // to avoid re-standardising
             /** Expected Results
              * 5, 13, N.raja     | 1.0  | Standardised
              * 6, 14, N.truncata | 0.66 | Standardised
@@ -65,6 +66,7 @@ public class UEA_ML_Coursework {
              * 8, 12, N.truncata | 0.66 | Standardised
              */
             System.out.println("------Classification Results------");
+            System.out.println("K is: " + knn.getK());
             double[] instDist = new double[trainData.numClasses()];
             for (int i = 0; i < testData.numInstances(); i++){
                 System.out.println("\n" + testData.get(i));
@@ -72,7 +74,7 @@ public class UEA_ML_Coursework {
                         trainData.classAttribute().value((int)knn.classifyInstance(testData.get(i))));
                 instDist = knn.distributionForInstance(testData.get(i));
                 for (int j = 0; j < instDist.length; j++){
-                    System.out.println("Class " + (j+1) + ": " + instDist[j]);
+                    System.out.println("Class " + (j) + ": " + instDist[j]);
                 }
             }
         }
@@ -95,9 +97,10 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
-            System.out.println("------Testing Standardisation------");
+            System.out.println("------Testing Standardisation------\n");
             
             // Print dataset information
+            System.out.println("------Training data properties------");
             WekaTools.printDatasetInfo(trainData);
             
             // Instantiate classifier
@@ -109,14 +112,6 @@ public class UEA_ML_Coursework {
             } catch (Exception e){
                 System.out.println("There was an issue building classifier\n"
                         + e);
-            }
-            
-            // Loading the unclassified objects from Part 1
-            try {
-                testData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff", 
-                        false);
-            } catch (Exception e){
-                System.out.println("Error loading test data\n" + e);
             }
             
             // Standardising the values
@@ -157,7 +152,7 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
             
-            System.out.println("------Testing Automated Setting of K------");
+            System.out.println("------Testing Automated Setting of K------\n");
             
             // Print dataset information
             WekaTools.printDatasetInfo(trainData);
@@ -190,8 +185,9 @@ public class UEA_ML_Coursework {
     /**
      * Tests the functionality that uses a weighted scheme for voting.
      * @param dataLocation The location of the file that contains training data.
+     * @param testDataLocation The location of the file containing Test File.
      */
-    public static void testWeightedScheme(String dataLocation){
+    public static void testWeightedScheme(String dataLocation, String testDataLocation){
         
         Instances trainData = null, testData = null;
         
@@ -204,9 +200,10 @@ public class UEA_ML_Coursework {
         
         if (trainData != null){
         
-            System.out.println("------Testing Weighted Voting Scheme------");
+            System.out.println("------Testing Weighted Voting Scheme------\n");
             
             // Print dataset information
+            System.out.println("------Training data properties------");
             WekaTools.printDatasetInfo(trainData);
             
             // Instantiate classifier
@@ -223,8 +220,7 @@ public class UEA_ML_Coursework {
             
             // Classifying the unclassified objects from Part 1
             try {
-                testData = WekaTools.loadData("./data/Pitcher_Plants_TEST.arff", 
-                        false);
+                testData = WekaTools.loadData(testDataLocation, false);
             } catch (Exception e){
                 System.out.println("Error loading test data\n" + e);
             }
@@ -254,18 +250,84 @@ public class UEA_ML_Coursework {
     }
     
     /**
+     * Tests the KNN classifier on Iris dataset.
+     * @param dataLocation The location of the file that contains training data.
+     * @param testDataLocation The location of the file containing Test File.
+     */
+    public static void testIrisDataset(String dataLocation, String testDataLocation){
+        
+        Instances trainData = null, testData = null;
+        
+        // Loading the data
+        try{
+            trainData = WekaTools.loadData(dataLocation, true);
+        } catch (Exception e){
+            System.out.println("There was an issue loading the data \n" + e );
+        }
+        
+        if (trainData != null){
+            
+            System.out.println("------Testing The KNN on Iris Dataset------\n");
+            
+            // Print dataset information
+            System.out.println("------Training data properties------");
+            WekaTools.printDatasetInfo(trainData);
+            
+            // Instantiate classifier
+            KNN knn = new KNN();
+            
+            // Build the classifier using the training data
+            try{
+                knn.buildClassifier(trainData);
+                knn.setSetKAuto(true);
+                knn.setWeightedScheme(true);
+            } catch (Exception e){
+                System.out.println("There was an issue building classifier\n"
+                        + e);
+            }
+            
+            // Classifying the unclassified objects from Part 1
+            try {
+                testData = WekaTools.loadData(testDataLocation, true);
+                System.out.println("------Testing data properties------");
+                WekaTools.printDatasetInfo(testData);
+            } catch (Exception e){
+                System.out.println("Error loading test data\n" + e);
+            }
+            
+            // Classify test data and show distribution for each class
+            /** Expected Results
+             * 
+             */
+            System.out.println("------Classification Results------");
+            System.out.println("K is: " + knn.getK());
+            System.out.println("Accuracy: " + WekaTools.accuracy(knn, testData));
+            int[] classifiedInstances = WekaTools.classifyInstances(knn, testData);
+            int[] actualResults = WekaTools.getClassValues(testData);
+            int[][] confMatrix = confusionMatrix(classifiedInstances,
+                    actualResults, trainData.numClasses());
+            printConfusionMatrix(confMatrix);
+        }
+    }
+    
+    /**
      * The main function for testing the KNN classifier.
      * @param args Terminal arguments passed to the program
      */
     public static void main(String[] args) {
         
-//        testPart1("./data/Pitcher_Plants_TRAIN.arff");
+//        testPart1("./data/Pitcher_Plants_TRAIN.arff",
+//                "./data/Pitcher_Plants_TEST.arff");
         
 //        testStandardisation("./data/Pitcher_Plants_TRAIN.arff");
 
 //        testSettingKByLOOCV("./data/Pitcher_Plants_TRAIN.arff");;
 
-        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff");;
+//        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff", 
+//                "./data/Pitcher_Plants_TEST.arff");
+        
+        testIrisDataset("./data/iris/iris_TRAIN.arff", 
+                "./data/iris/iris_TRAIN.arff");
     }
     
 }

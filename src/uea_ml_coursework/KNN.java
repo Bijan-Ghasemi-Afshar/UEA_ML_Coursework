@@ -379,9 +379,11 @@ public class KNN extends AbstractClassifier {
      */
     private void standardiseDataModelAttr(){
         
-        // If data is already standardised, don't standardise
+        // If data is already standardised, don't standardise and set the flag
+        // to false
         if(isStandardised()){
             System.out.println("Data is already standardised");
+            this.standardise = false;
             return;
         }
         
@@ -501,7 +503,7 @@ public class KNN extends AbstractClassifier {
         Instances train, originalDataModel = new Instances(dataModel);
         int accuracy = 0, highestAccuracy = 0, highestKIndex = 0;
         // The size of training data is always 1 fewer than original
-        int[] kRange = setKRange(dataModel.numInstances() - 1);
+        int[] kRange = setKRange(dataModel.numInstances());
         int[] kAccuracies = new int[kRange.length];
         // For each instance set it to test and the rest to train
         for (int i = 0; i<originalDataModel.numInstances(); i++){
@@ -548,7 +550,7 @@ public class KNN extends AbstractClassifier {
         int[] kRange;
         // Calculate 20% of tarin data (increase 1 if it's even)
         int train20Perc = (int)(trainSize * 0.2);
-        train20Perc = (train20Perc % 2 == 0) ? train20Perc : train20Perc++;
+        train20Perc = (train20Perc % 2 != 0) ? train20Perc : train20Perc++;
         
         if (train20Perc > 100){
             kRange = new int[100];

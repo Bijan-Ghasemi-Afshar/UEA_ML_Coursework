@@ -5,7 +5,7 @@
             <url>src/uea_ml_coursework/KNN.java</url>
             <bookmark id="1">
                 <name/>
-                <line>410</line>
+                <line>440</line>
                 <key/>
             </bookmark>
         </file>
@@ -14,6 +14,7 @@
         <group>
             <file>file:/home/bijan/NetBeansProjects/UEA_ML_Coursework/src/uea_ml_coursework/UEA_ML_Coursework.java</file>
             <file>file:/home/bijan/NetBeansProjects/UEA_ML_Coursework/src/uea_ml_coursework/KNN.java</file>
+            <file>file:/home/bijan/NetBeansProjects/UEA_ML_Coursework/src/uea_ml_coursework/KnnEnsemble.java</file>
         </group>
     </open-files>
 </project-private>
