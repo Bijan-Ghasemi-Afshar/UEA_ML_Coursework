@@ -1,7 +1,12 @@
 /*
  * This class is an implementation of a KNN Ensemble. There some general design
  * decisions made that are justified based on proposed methods for sampling 
- * which are referenced through out this class implementation.
+ * which are referenced through out this class implementation. The Boosting
+ * sampling method has been used to build this ensemble. Based on the following:
+ * (http://www.sciencedirect.com/science/article/pii/S0957417409002140)
+ * According to the aforementioned paper, Boosting method when constructing
+ * ensemble of KNNs does not improve the results significantly. Hence, a 
+ * modification of this approach is more favourable.
  */
 package uea_ml_coursework;
 

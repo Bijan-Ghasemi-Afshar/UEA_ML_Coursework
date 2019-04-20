@@ -254,7 +254,7 @@ public class UEA_ML_Coursework {
      * @param dataLocation The location of the file that contains training data.
      * @param testDataLocation The location of the file containing Test File.
      */
-    public static void testIrisDataset(String dataLocation, String testDataLocation){
+    public static void testDataset(String dataLocation, String testDataLocation){
         
         Instances trainData = null, testData = null;
         
@@ -310,6 +310,68 @@ public class UEA_ML_Coursework {
         }
     }
     
+    
+    public static void playgroundTesting(String dataLocation){
+        
+        Instances trainData = null, testData = null;
+        
+        // Loading the data
+        try{
+            trainData = WekaTools.loadData(dataLocation, false);
+        } catch (Exception e){
+            System.out.println("There was an issue loading the data \n" + e );
+        }
+        
+        if (trainData != null){
+            
+            System.out.println("------Testing Playgound------\n");
+            
+            // Splitting data
+            Instances[] splitedData = WekaTools.splitData(trainData, 0.3);
+            trainData = splitedData[0];
+            testData = splitedData[1];
+            
+            System.out.println("Train: " + trainData);
+            System.out.println("Test: " + testData);
+            
+            // Print dataset information
+            System.out.println("------Training data properties------");
+            WekaTools.printDatasetInfo(trainData);
+            
+            // Instantiate classifier
+            KNN knn = new KNN(false, false, true);
+//            knn.setK(3);
+            
+            // Build the classifier using the training data
+            try{
+                knn.buildClassifier(trainData);
+            } catch (Exception e){
+                System.out.println("There was an issue building classifier\n"
+                        + e);
+            }
+            
+            System.out.println("------Testing data properties------");
+            WekaTools.printDatasetInfo(testData);
+            
+            // Classify test data and show distribution for each class
+            System.out.println("------Classification Results------");
+            System.out.println("K is: " + knn.getK());
+//            System.out.println("Accuracy: " + WekaTools.accuracy(knn, testData));
+            for (int i = 0; i < testData.numInstances(); i++){
+                double[] instDist = knn.distributionForInstance(testData.get(i));
+                for (int j = 0; j < instDist.length; j++){
+                    System.out.println("Class " + (j) + ": " + instDist[j]);
+                }
+            }
+//            int[] classifiedInstances = WekaTools.classifyInstances(knn, testData);
+//            int[] actualResults = WekaTools.getClassValues(testData);
+//            int[][] confMatrix = confusionMatrix(classifiedInstances,
+//                    actualResults, trainData.numClasses());
+//            printConfusionMatrix(confMatrix);
+        }
+        
+    }
+    
     /**
      * The main function for testing the KNN classifier.
      * @param args Terminal arguments passed to the program
@@ -326,8 +388,25 @@ public class UEA_ML_Coursework {
 //        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff", 
 //                "./data/Pitcher_Plants_TEST.arff");
         
-        testIrisDataset("./data/iris/iris_TRAIN.arff", 
-                "./data/iris/iris_TRAIN.arff");
+//        testDataset("./data/iris/iris_TRAIN.arff", 
+//                "./data/iris/iris_TEST.arff");
+        
+//        testDataset("./data/libras/libras_TRAIN.arff", 
+//                "./data/libras/libras_TEST.arff");
+        
+//        testDataset("./data/optical/optical_TRAIN.arff", 
+//                "./data/optical/optical_TEST.arff");
+
+//        testDataset("./data/blood/blood_TRAIN.arff", 
+//                "./data/blood/blood_TEST.arff");
+
+        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
+                "./data/ecoli/ecoli_TEST.arff");
+        
+        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
+                "./data/ecoli/ecoli_TEST.arff");
+
+//        playgroundTesting("./data/Pitcher_Plants_TRAIN.arff");
     }
     
 }

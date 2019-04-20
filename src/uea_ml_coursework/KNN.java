@@ -251,6 +251,8 @@ public class KNN extends AbstractClassifier {
         if (this.standardise){   
             standardiseObject(clonedObject);
         }
+
+//        System.out.println("Object to be classified: " + clonedObject);
         
         // Go through all training data K times and choose smallest distance
         for (int i = 0; i < closestInstances.length; i++){
@@ -521,6 +523,7 @@ public class KNN extends AbstractClassifier {
         
         // Find the highest accuracy of K and settle ties randomly
         for (int i = 0; i < kAccuracies.length; i++){
+//            System.out.println("K " + (i+1) + ": " + kAccuracies[i]);
             if (kAccuracies[i] == highestAccuracy){
                 if (Math.random() < 0.5){
                     highestAccuracy = kAccuracies[i];
