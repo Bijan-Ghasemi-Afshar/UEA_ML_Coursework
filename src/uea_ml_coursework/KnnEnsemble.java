@@ -21,6 +21,8 @@ public class KnnEnsemble {
     
     // Class properties
     private Instances dataModel;
+    private double[] instanceWeights;
+    
     private KNN[] knnEnsemble;
     
     /**
@@ -35,7 +37,18 @@ public class KnnEnsemble {
      * @param data The training dataset.
      */
     public void buildClassifier(Instances data){
+        
+        // Initializing variables
         dataModel = new Instances(data);
+        this.instanceWeights = new double[dataModel.numInstances()];
+        double weightedError;
+        
+        
+        // Initialize all instance weights as 1
+        for (int i = 0; i < instanceWeights.length; i++){
+            instanceWeights[i] = 1;
+        }
+        instanceWeights = calculateInstanceWeight(instanceWeights);
         
         // Populate the ensemble
         try {
@@ -43,6 +56,7 @@ public class KnnEnsemble {
             for (int i = 0; i < knnEnsemble.length; i++){
                 knnEnsemble[i] = new KNN(true, true, true);
                 knnEnsemble[i].buildClassifier(dataModel);
+                Instances wrongClassifications = knnEnsemble[i].crossValidateTest();
             }
             
         } catch (Exception e){
@@ -80,6 +94,25 @@ public class KnnEnsemble {
         classifyInstance(object);
         
         return results;
+    }
+    
+    private double[] calculateInstanceWeight(double[] weights){
+        
+        double sumOfWeights = 0.0;
+        
+        for (double value:weights){
+            sumOfWeights += value;
+        }
+        
+        System.out.println("Sum of instance Weights: " + sumOfWeights);
+        
+        for (int i = 0; i < dataModel.numInstances(); i++){
+            
+            weights[i] = weights[i]/sumOfWeights;
+            System.out.println(i + " weight: " + weights[i]);
+        }
+        
+        return weights;
     }
     
 }

@@ -452,7 +452,7 @@ public class UEA_ML_Coursework {
             try {
                 testData = WekaTools.loadData(testDataLocation, true);
                 System.out.println("------Testing data properties------");
-                WekaTools.printDatasetInfo(testData);
+//                WekaTools.printDatasetInfo(testData);
             } catch (Exception e){
                 System.out.println("Error loading test data\n" + e);
             }
@@ -462,8 +462,8 @@ public class UEA_ML_Coursework {
              * 
              */
             System.out.println("------Classification Results------");
-            System.out.printf("Accuracy: %.2f%%\n",  
-                    accuracy(knnEnsem, testData));
+//            System.out.printf("Accuracy: %.2f%%\n",  
+//                    accuracy(knnEnsem, testData));
             
 //            for (int i = 0; i < testData.numInstances(); i++){
 //                System.out.println((i+1) + " Results: " + 
@@ -489,8 +489,8 @@ public class UEA_ML_Coursework {
 //        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff", 
 //                "./data/Pitcher_Plants_TEST.arff");
         
-        testDataset("./data/iris/iris_TRAIN.arff", 
-                "./data/iris/iris_TEST.arff");
+//        testDataset("./data/iris/iris_TRAIN.arff", 
+//                "./data/iris/iris_TEST.arff");
         
 //        testDataset("./data/libras/libras_TRAIN.arff", 
 //                "./data/libras/libras_TEST.arff");
@@ -509,8 +509,8 @@ public class UEA_ML_Coursework {
 
 //        playgroundTesting("./data/Pitcher_Plants_TRAIN.arff");
 
-//        ensembleTest("./data/iris/iris_TRAIN.arff", 
-//                "./data/iris/iris_TEST.arff");
+        ensembleTest("./data/iris/iris_TRAIN.arff", 
+                "./data/iris/iris_TEST.arff");
 
     }
     
