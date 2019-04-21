@@ -463,8 +463,8 @@ public class UEA_ML_Coursework {
              * 
              */
             System.out.println("------Classification Results------");
-//            System.out.printf("Accuracy: %.2f%%\n",  
-//                    accuracy(knnEnsem, testData));
+            System.out.printf("Accuracy: %.2f%%\n",  
+                    accuracy(knnEnsem, testData));
             
 //            for (int i = 0; i < testData.numInstances(); i++){
 //                System.out.println((i+1) + " Results: " + 
@@ -510,8 +510,11 @@ public class UEA_ML_Coursework {
 
 //        playgroundTesting("./data/Pitcher_Plants_TRAIN.arff");
 
-        ensembleTest("./data/iris/iris_TRAIN.arff", 
-                "./data/iris/iris_TEST.arff");
+//        ensembleTest("./data/iris/iris_TRAIN.arff", 
+//                "./data/iris/iris_TEST.arff");
+        
+        ensembleTest("./data/ecoli/ecoli_TRAIN.arff", 
+                "./data/ecoli/ecoli_TEST.arff");
 
     }
     

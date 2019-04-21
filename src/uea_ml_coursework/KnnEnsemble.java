@@ -10,6 +10,7 @@
  */
 package uea_ml_coursework;
 
+import weka.core.Debug.Random;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -41,6 +42,7 @@ public class KnnEnsemble {
         
         // Initializing variables
         dataModel = new Instances(data);
+        Instances clonedDataModel = new Instances(dataModel);
         this.instanceWeights = new double[dataModel.numInstances()];
         double weightedError = 0.0;
         
@@ -56,6 +58,10 @@ public class KnnEnsemble {
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
+                
+                clonedDataModel.resampleWithWeights(new Random(100),
+                        instanceWeights);
+                
                 knnEnsemble[i] = new KNN(true, true, true);
                 knnEnsemble[i].buildClassifier(dataModel);
                 int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
@@ -69,7 +75,7 @@ public class KnnEnsemble {
                 // Calculating the class weight
                 classWeight[i] = Math.log((1-weightedError)/weightedError) / 2;
                 
-                System.out.println("Class weight: " + classWeight[i]);
+//                System.out.println("Class weight: " + classWeight[i]);
                 
                 instanceWeights = calculateInstanceWeight(wrongClassifications, 
                         classWeight[i]);
@@ -90,13 +96,32 @@ public class KnnEnsemble {
      */
     public double classifyInstance(Instance object){
         int classIndex = 0;
-        double[] classifyResults = new double[50];
+        double[] classifyResults = new double[dataModel.numClasses()];
+        double highestVote = 0;
         
+//        System.out.println("\n");
         for (int i = 0; i < knnEnsemble.length; i++){
-            classifyResults[i] = knnEnsemble[i].classifyInstance(object);
-            classIndex += classifyResults[i];
+            classIndex = (int)knnEnsemble[i].classifyInstance(object);
+//            System.out.println(classIndex);
+            classifyResults[classIndex] += classWeight[i];
         }
-        classIndex /= 50;
+//        System.out.println("\n");
+        
+        // Find the class with highest vote
+        for (int i = 0; i < classifyResults.length; i++){
+            
+//            System.out.println(i + " classify Vote: " + classifyResults[i]);
+            
+            if (classifyResults[i] == highestVote){
+                if (Math.random() < 0.5){
+                    highestVote = classifyResults[i];
+                    classIndex = i;
+                }
+            } else if(classifyResults[i] > highestVote){
+                highestVote = classifyResults[i];
+                classIndex = i;
+            } else {}
+        }
         
         return (double)classIndex;
     }
