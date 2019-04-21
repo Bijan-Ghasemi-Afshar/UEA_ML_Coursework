@@ -35,7 +35,20 @@ public class KnnEnsemble {
      * @param data The training dataset.
      */
     public void buildClassifier(Instances data){
-        dataModel = data;
+        dataModel = new Instances(data);
+        
+        // Populate the ensemble
+        try {
+        
+            for (int i = 0; i < knnEnsemble.length; i++){
+                knnEnsemble[i] = new KNN(true, true, true);
+                knnEnsemble[i].buildClassifier(dataModel);
+            }
+            
+        } catch (Exception e){
+            System.out.println("There was an issue creating ensemble\n" + e);
+        }
+        
     }
     
     /**
@@ -45,6 +58,13 @@ public class KnnEnsemble {
      */
     public double classifyInstance(Instance object){
         int classIndex = 0;
+        double[] classifyResults = new double[50];
+        
+        for (int i = 0; i < knnEnsemble.length; i++){
+            classifyResults[i] = knnEnsemble[i].classifyInstance(object);
+            classIndex += classifyResults[i];
+        }
+        classIndex /= 50;
         
         return (double)classIndex;
     }

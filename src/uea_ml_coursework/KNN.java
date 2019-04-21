@@ -13,6 +13,7 @@ import weka.core.Capabilities;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.tools.WekaTools;
 
 /**
  * 10/04/2019
@@ -168,6 +169,14 @@ public class KNN extends AbstractClassifier {
     }
     
     /**
+     * Accessor for data model.
+     * @return The data model.
+     */
+    public Instances getDataModel(){
+        return dataModel;
+    }
+    
+    /**
      * Builds the classifier by storing the training data.
      * @param data The classified training data
      * @throws Exception 
@@ -305,6 +314,56 @@ public class KNN extends AbstractClassifier {
     }
     
     /**
+     * Tests the model with 10-fold cross validation. This is used for ensemble
+     * building.
+     * @return The wrongly classified instances.
+     */
+    public Instances crossValidateTest(){
+        
+        Instances wrongClassification = new Instances(dataModel, 0);
+        Instances testFold = null;
+        Instances trainFold = null;
+        int foldSize = dataModel.numInstances()/10;
+        int[] foldIndex = new int[2];
+        
+        for (int fold = 0; fold < 10; fold++){
+            Instances clonedDataModel = new Instances(dataModel);
+            
+            foldIndex[0] = fold * foldSize;
+            // If last fold get whatever left
+            if (fold == 9){
+                // Consider that test fold will also be removed
+                foldIndex[1] = dataModel.numInstances() - (foldSize+1);
+            } else {
+                foldIndex[1] = foldIndex[0] + 6;
+            }
+            
+            testFold = getTestFold(foldIndex);
+            trainFold = getTrainFold(foldIndex, clonedDataModel);
+            
+            try{
+                
+                KNN tempKNN = new KNN();
+                tempKNN.buildClassifier(trainFold);
+                
+                for (int i = 0; i < testFold.numInstances(); i++){
+                    if(tempKNN.classifyInstance(testFold.get(i)) !=
+                            testFold.get(i).classValue()){
+                        wrongClassification.add(testFold.get(i));
+                    }
+                }
+                
+            }catch (Exception e){
+                System.out.println("There was an issue in Cross Validation\n"+
+                        e);
+            }
+            
+        }
+                
+        return wrongClassification;
+    }
+    
+    /**
      * Calculates the distribution to which each class was voted for (0.0 - 1.0)
      * @param object The object that is to be classified.
      * @return An array of distributions for each class.
@@ -321,6 +380,35 @@ public class KNN extends AbstractClassifier {
         }
         
         return results;
+    }
+    
+    /**
+     * Function that gets the test fold of data.
+     * @param index The starting and ending index of the test fold.
+     * @return The instances of the test data fold.
+     */
+    private Instances getTestFold(int[] index){
+        
+        Instances dataFold = new Instances(dataModel, 0);
+        
+        for (int i = index[0]; i <= index[1]; i++){
+            dataFold.add(dataModel.get(i));
+        }
+        
+        return dataFold;
+    }
+    
+    /**
+     * Function that gets the training fold of data.
+     * @param index The starting and ending index of the training fold.
+     * @param allData The entire data model.
+     * @return The instances of the training data fold.
+     */
+    private Instances getTrainFold(int[] index, Instances allData){
+        for (int i = index[0]; i <= index[1]; i++){
+            allData.remove(i);
+        }
+        return allData;
     }
     
     /**
@@ -384,7 +472,7 @@ public class KNN extends AbstractClassifier {
         // If data is already standardised, don't standardise and set the flag
         // to false
         if(isStandardised()){
-            System.out.println("Data is already standardised");
+//            System.out.println("Data is already standardised");
             this.standardise = false;
             return;
         }

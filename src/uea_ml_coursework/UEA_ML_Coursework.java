@@ -4,16 +4,50 @@
  */
 package uea_ml_coursework;
 
+import weka.classifiers.Evaluation;
+import weka.core.Debug.Random;
 import weka.core.Instances;
 import weka.tools.WekaTools;
 import static weka.tools.WekaTools.confusionMatrix;
 import static weka.tools.WekaTools.printConfusionMatrix;
+
 
 /**
  * 10/04/2019
  * @author Bijan Ghasemi Afshar (100125463)
  */
 public class UEA_ML_Coursework {
+    
+    public static double accuracy(KnnEnsemble classifier, Instances test){
+        
+        int numOfCorrect = 0;
+        for (int i = 0; i < test.numInstances(); i++){
+//            System.out.println(test.get(i));
+            try{
+                
+                double classificationResult = classifier.classifyInstance(test.instance(i));
+                double instanceClassValue = test.instance(i).classValue();
+                
+                if (classificationResult == instanceClassValue){
+
+                    numOfCorrect++;
+                }
+                
+            } catch (Exception e){
+                System.out.println("There was an issue clasifying\n" + e);
+            }
+            
+        }
+        
+        int total = test.numInstances();
+        
+        System.out.println("Corrects: " + numOfCorrect);
+        System.out.println("Total: " + total);
+        
+        return ((double)numOfCorrect / (double)total) * 100;
+        
+    }
+    
     
     /**
      * Tests the results of Part 1
@@ -275,12 +309,19 @@ public class UEA_ML_Coursework {
             
             // Instantiate classifier
             KNN knn = new KNN();
+//            knn.setK(13);
             
             // Build the classifier using the training data
             try{
                 knn.buildClassifier(trainData);
                 knn.setSetKAuto(true);
                 knn.setWeightedScheme(true);
+                System.out.println("K is: " + knn.getK());
+                
+                Evaluation eval = new Evaluation(trainData);
+                eval.crossValidateModel(knn, trainData, 10, new Random(100));
+                System.out.printf("Estimated Accuracy: %.2f%%\n",
+                        eval.pctCorrect());
             } catch (Exception e){
                 System.out.println("There was an issue building classifier\n"
                         + e);
@@ -300,13 +341,17 @@ public class UEA_ML_Coursework {
              * 
              */
             System.out.println("------Classification Results------");
-            System.out.println("K is: " + knn.getK());
-            System.out.println("Accuracy: " + WekaTools.accuracy(knn, testData));
-            int[] classifiedInstances = WekaTools.classifyInstances(knn, testData);
-            int[] actualResults = WekaTools.getClassValues(testData);
-            int[][] confMatrix = confusionMatrix(classifiedInstances,
-                    actualResults, trainData.numClasses());
-            printConfusionMatrix(confMatrix);
+            Instances wrongs = knn.crossValidateTest();
+            for (int i = 0; i < wrongs.numInstances(); i++){
+                System.out.println(wrongs.get(i));
+            }
+//            System.out.printf("Accuracy: %.2f%%\n",  
+//                    WekaTools.accuracy(knn, testData));
+//            int[] classifiedInstances = WekaTools.classifyInstances(knn, testData);
+//            int[] actualResults = WekaTools.getClassValues(testData);
+//            int[][] confMatrix = confusionMatrix(classifiedInstances,
+//                    actualResults, trainData.numClasses());
+//            printConfusionMatrix(confMatrix);
         }
     }
     
@@ -372,6 +417,62 @@ public class UEA_ML_Coursework {
         
     }
     
+    public static void ensembleTest(String dataLocation, String testDataLocation){
+        
+        Instances trainData = null, testData = null;
+        
+        // Loading the data
+        try{
+            trainData = WekaTools.loadData(dataLocation, true);
+        } catch (Exception e){
+            System.out.println("There was an issue loading the data \n" + e );
+        }
+        
+        if (trainData != null){
+            
+            System.out.println("------Testing The KNN on Iris Dataset------\n");
+            
+            // Print dataset information
+            System.out.println("------Training data properties------");
+            WekaTools.printDatasetInfo(trainData);
+            
+            // Instantiate classifier
+            KnnEnsemble knnEnsem = new KnnEnsemble();
+//            knn.setK(13);
+            
+            // Build the classifier using the training data
+            try{
+                knnEnsem.buildClassifier(trainData);
+            } catch (Exception e){
+                System.out.println("There was an issue building classifier\n"
+                        + e);
+            }
+            
+            // Classifying the unclassified objects from Part 1
+            try {
+                testData = WekaTools.loadData(testDataLocation, true);
+                System.out.println("------Testing data properties------");
+                WekaTools.printDatasetInfo(testData);
+            } catch (Exception e){
+                System.out.println("Error loading test data\n" + e);
+            }
+            
+            // Classify test data and show distribution for each class
+            /** Expected Results
+             * 
+             */
+            System.out.println("------Classification Results------");
+            System.out.printf("Accuracy: %.2f%%\n",  
+                    accuracy(knnEnsem, testData));
+            
+//            for (int i = 0; i < testData.numInstances(); i++){
+//                System.out.println((i+1) + " Results: " + 
+//                        knnEnsem.classifyInstance(testData.get(i)));
+//            }
+            
+        }
+    }
+    
     /**
      * The main function for testing the KNN classifier.
      * @param args Terminal arguments passed to the program
@@ -388,8 +489,8 @@ public class UEA_ML_Coursework {
 //        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff", 
 //                "./data/Pitcher_Plants_TEST.arff");
         
-//        testDataset("./data/iris/iris_TRAIN.arff", 
-//                "./data/iris/iris_TEST.arff");
+        testDataset("./data/iris/iris_TRAIN.arff", 
+                "./data/iris/iris_TEST.arff");
         
 //        testDataset("./data/libras/libras_TRAIN.arff", 
 //                "./data/libras/libras_TEST.arff");
@@ -400,13 +501,17 @@ public class UEA_ML_Coursework {
 //        testDataset("./data/blood/blood_TRAIN.arff", 
 //                "./data/blood/blood_TEST.arff");
 
-        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
-                "./data/ecoli/ecoli_TEST.arff");
+//        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
+//                "./data/ecoli/ecoli_TEST.arff");
         
-        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
-                "./data/ecoli/ecoli_TEST.arff");
+//        testDataset("./data/ecoli/ecoli_TRAIN.arff", 
+//                "./data/ecoli/ecoli_TEST.arff");
 
 //        playgroundTesting("./data/Pitcher_Plants_TRAIN.arff");
+
+//        ensembleTest("./data/iris/iris_TRAIN.arff", 
+//                "./data/iris/iris_TEST.arff");
+
     }
     
 }
