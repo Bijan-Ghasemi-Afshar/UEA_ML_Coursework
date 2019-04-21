@@ -6,14 +6,12 @@
  */
 package uea_ml_coursework;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import weka.classifiers.AbstractClassifier;
-import weka.classifiers.Classifier;
 import weka.core.Capabilities;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.tools.WekaTools;
 
 /**
  * 10/04/2019
@@ -316,11 +314,11 @@ public class KNN extends AbstractClassifier {
     /**
      * Tests the model with 10-fold cross validation. This is used for ensemble
      * building.
-     * @return The wrongly classified instances.
+     * @return The index of wrongly classified instances.
      */
-    public Instances crossValidateTest(){
+    public int[] crossValidateTest(){
         
-        Instances wrongClassification = new Instances(dataModel, 0);
+        ArrayList<Integer> wrongClassification = new ArrayList<Integer>();
         Instances testFold = null;
         Instances trainFold = null;
         int foldSize = dataModel.numInstances()/10;
@@ -332,13 +330,18 @@ public class KNN extends AbstractClassifier {
             foldIndex[0] = fold * foldSize;
             // If last fold get whatever left
             if (fold == 9){
-                // Consider that test fold will also be removed
-                foldIndex[1] = dataModel.numInstances() - (foldSize+1);
+                foldIndex[1] = dataModel.numInstances() - 1;
             } else {
                 foldIndex[1] = foldIndex[0] + 6;
             }
             
             testFold = getTestFold(foldIndex);
+            
+            if (fold == 9){
+                // Consider that test fold will be removed from training
+                foldIndex[1] = dataModel.numInstances() - (foldSize+1);
+            }
+            
             trainFold = getTrainFold(foldIndex, clonedDataModel);
             
             try{
@@ -349,7 +352,7 @@ public class KNN extends AbstractClassifier {
                 for (int i = 0; i < testFold.numInstances(); i++){
                     if(tempKNN.classifyInstance(testFold.get(i)) !=
                             testFold.get(i).classValue()){
-                        wrongClassification.add(testFold.get(i));
+                        wrongClassification.add((fold*foldSize)+i);
                     }
                 }
                 
@@ -359,8 +362,14 @@ public class KNN extends AbstractClassifier {
             }
             
         }
-                
-        return wrongClassification;
+         
+        // Convert ArrayList to int[]
+        int[] wrongClassificationArr = new int[wrongClassification.size()];
+        for (int i = 0; i < wrongClassificationArr.length; i++) {
+            wrongClassificationArr[i] = wrongClassification.get(i);
+        }
+        
+        return wrongClassificationArr;
     }
     
     /**

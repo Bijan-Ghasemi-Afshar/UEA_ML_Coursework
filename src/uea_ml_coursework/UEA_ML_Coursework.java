@@ -341,9 +341,10 @@ public class UEA_ML_Coursework {
              * 
              */
             System.out.println("------Classification Results------");
-            Instances wrongs = knn.crossValidateTest();
-            for (int i = 0; i < wrongs.numInstances(); i++){
-                System.out.println(wrongs.get(i));
+            int[] wrongs = knn.crossValidateTest();
+            System.out.println("size: " + wrongs.length);
+            for (int i = 0; i < wrongs.length; i++){
+                System.out.println(wrongs[i]);
             }
 //            System.out.printf("Accuracy: %.2f%%\n",  
 //                    WekaTools.accuracy(knn, testData));

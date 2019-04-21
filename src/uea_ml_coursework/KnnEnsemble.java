@@ -22,14 +22,15 @@ public class KnnEnsemble {
     // Class properties
     private Instances dataModel;
     private double[] instanceWeights;
-    
+    private double[] classWeight;
     private KNN[] knnEnsemble;
     
     /**
      * Constructor for creating the KNN Ensemble.
      */
     public KnnEnsemble(){
-        this.knnEnsemble = new KNN[50];
+        this.knnEnsemble = new KNN[4];
+        this.classWeight = new double[4];
     }
     
     /**
@@ -41,14 +42,15 @@ public class KnnEnsemble {
         // Initializing variables
         dataModel = new Instances(data);
         this.instanceWeights = new double[dataModel.numInstances()];
-        double weightedError;
+        double weightedError = 0.0;
+        
         
         
         // Initialize all instance weights as 1
         for (int i = 0; i < instanceWeights.length; i++){
             instanceWeights[i] = 1;
         }
-        instanceWeights = calculateInstanceWeight(instanceWeights);
+        instanceWeights = normalizeInstanceWeight(instanceWeights);
         
         // Populate the ensemble
         try {
@@ -56,7 +58,23 @@ public class KnnEnsemble {
             for (int i = 0; i < knnEnsemble.length; i++){
                 knnEnsemble[i] = new KNN(true, true, true);
                 knnEnsemble[i].buildClassifier(dataModel);
-                Instances wrongClassifications = knnEnsemble[i].crossValidateTest();
+                int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
+//                System.out.println("size: " + wrongClassifications.length);
+//                for (int j = 0; j < wrongClassifications.length; j++){
+//                    System.out.println(wrongClassifications[j]);
+//                }
+                weightedError = calculateWeightedError(wrongClassifications);
+//                System.out.println("The weighted Error: " + weightedError);
+                
+                // Calculating the class weight
+                classWeight[i] = Math.log((1-weightedError)/weightedError) / 2;
+                
+                System.out.println("Class weight: " + classWeight[i]);
+                
+                instanceWeights = calculateInstanceWeight(wrongClassifications, 
+                        classWeight[i]);
+                
+                
             }
             
         } catch (Exception e){
@@ -96,7 +114,12 @@ public class KnnEnsemble {
         return results;
     }
     
-    private double[] calculateInstanceWeight(double[] weights){
+    /**
+     * Function for normalizing instance weights.
+     * @param weights The initial weights that need to be normalized
+     * @return The normalized instance weights.
+     */
+    private double[] normalizeInstanceWeight(double[] weights){
         
         double sumOfWeights = 0.0;
         
@@ -104,15 +127,60 @@ public class KnnEnsemble {
             sumOfWeights += value;
         }
         
-        System.out.println("Sum of instance Weights: " + sumOfWeights);
+//        System.out.println("Sum of instance Weights: " + sumOfWeights);
         
         for (int i = 0; i < dataModel.numInstances(); i++){
             
             weights[i] = weights[i]/sumOfWeights;
-            System.out.println(i + " weight: " + weights[i]);
+//            System.out.println(i + " weight: " + weights[i]);
         }
         
         return weights;
+    }
+ 
+    /**
+     * Function for calculating instance weights. This is used for giving more
+     * weight to wrongly classified instances for creating the next classifier.
+     * @param wrongClassifications index of wrongly classified instances.
+     * @param classW The classifier weight of the current classifier.
+     * @return The new instance weights.
+     */
+    private double[] calculateInstanceWeight(int[] wrongClassifications, 
+            double classW){
+        
+        for (int i = 0; i < instanceWeights.length; i++){
+            
+            // If instance was wrongly classified give higher weight
+            for (int j = 0; j < wrongClassifications.length; j++){
+                if (i == wrongClassifications[j]){
+                    instanceWeights[i] = instanceWeights[i] * Math.exp(classW);
+                }
+            }
+            
+            // if instance was correctly classified give less weight
+            instanceWeights[i] = instanceWeights[i] * Math.exp(-classW);
+        }
+        
+        // normalize weights
+        instanceWeights = normalizeInstanceWeight(instanceWeights);
+        
+        return instanceWeights;
+    }
+    
+    /**
+     * Function for calculating the weighted error of a classifier. Calculated 
+     * by adding the instance weight of wrongly classified instances.
+     * @param index The index of wrongly classified instances.
+     * @return The calculated weighted error.
+     */
+    private double calculateWeightedError(int[] index){
+        double sum = 0;
+        
+        for (int i = 0; i < index.length; i++){
+            sum += instanceWeights[index[i]];
+        }
+        
+        return sum;
     }
     
 }
