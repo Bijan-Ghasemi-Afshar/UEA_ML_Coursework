@@ -56,8 +56,8 @@ public class KnnEnsemble {
         
             for (int i = 0; i < knnEnsemble.length; i++){
 //                System.out.println("Run " + i);
-                knnEnsemble[i] = new KNN(true, false, true);
-                knnEnsemble[i].setK(3);
+                knnEnsemble[i] = new KNN(true, true, true);
+//                knnEnsemble[i].setK(3);
                 knnEnsemble[i].buildClassifier(clonedDataModel);
                 int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
 
@@ -147,6 +147,10 @@ public class KnnEnsemble {
         return results;
     }
  
+    /**
+     * Function to reset the instance weights if the classifier got all 
+     * instances right.
+     */
     private void resetInstanceWeight(){
         
         // Initialize all instance weights as 1
