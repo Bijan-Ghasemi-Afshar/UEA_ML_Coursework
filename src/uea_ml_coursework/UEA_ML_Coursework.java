@@ -397,11 +397,15 @@ public class UEA_ML_Coursework {
 //                "./data/Pitcher_Plants_TEST.arff");
 
 //        testDataset("iris", true);
-        testDataset("ecoli", true);
+//        testDataset("ecoli", true);
 //        testDataset("libras", true);
 //        testDataset("optical", false);
 //        testDataset("blood", true);
 //        testDataset("bank", false);
+//        testDataset("breast-tissue", true);
+        testDataset("conn-bench-sonar-mines-rocks", true);
+//        testDataset("conn-bench-vowel-deterding", true);
+//        testDataset("hill-valley", true);
 
 
     }

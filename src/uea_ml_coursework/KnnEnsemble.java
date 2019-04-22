@@ -76,7 +76,7 @@ public class KnnEnsemble {
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
-
+                
                 // if first run, get the original dataset
                 if (i == 0){
                     
@@ -113,11 +113,10 @@ public class KnnEnsemble {
                     knnEnsemble[i].setK(bestK);
                     knnEnsemble[i].buildClassifier(clonedDataModel);
                 }
-                
                 // Get the wrong classifications of this classifier through
                 // 10-fold cross validation
                 int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
-
+                
                 // Calculate the weighted error
                 weightedError = calculateWeightedError(wrongClassifications);
                 

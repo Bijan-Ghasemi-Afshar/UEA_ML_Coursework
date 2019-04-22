@@ -332,7 +332,7 @@ public class KNN extends AbstractClassifier {
             if (fold == 9){
                 foldIndex[1] = dataModel.numInstances() - 1;
             } else {
-                foldIndex[1] = foldIndex[0] + 6;
+                foldIndex[1] = foldIndex[0] + (foldSize-1);
             }
             
             testFold = getTestFold(foldIndex);
@@ -341,9 +341,7 @@ public class KNN extends AbstractClassifier {
                 // Consider that test fold will be removed from training
                 foldIndex[1] = dataModel.numInstances() - (foldSize+1);
             }
-            
             trainFold = getTrainFold(foldIndex, clonedDataModel);
-            
             try{
                 
                 KNN tempKNN = new KNN();
@@ -362,7 +360,6 @@ public class KNN extends AbstractClassifier {
             }
             
         }
-         
         // Convert ArrayList to int[]
         int[] wrongClassificationArr = new int[wrongClassification.size()];
         for (int i = 0; i < wrongClassificationArr.length; i++) {
