@@ -321,6 +321,7 @@ public class UEA_ML_Coursework {
                 knn.setSetKAuto(true);
                 knn.setWeightedScheme(true);
                 if (testEnsemble){
+                    knnEnsem.setBestK(knn.getK());
                     knnEnsem.buildClassifier(trainData);
                 }
                 
@@ -397,8 +398,8 @@ public class UEA_ML_Coursework {
 
 //        testDataset("iris", true);
 //        testDataset("ecoli", true);
-//        testDataset("libras", true);
-        testDataset("optical", false);
+        testDataset("libras", true);
+//        testDataset("optical", false);
 //        testDataset("blood", true);
 //        testDataset("bank", false);
 

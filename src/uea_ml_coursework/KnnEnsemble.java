@@ -25,6 +25,7 @@ public class KnnEnsemble {
     private double[] instanceWeights;
     private double[] classWeight;
     private KNN[] knnEnsemble;
+    private int bestK;
     
     /**
      * Constructor for creating the KNN Ensemble.
@@ -32,6 +33,25 @@ public class KnnEnsemble {
     public KnnEnsemble(){
         this.knnEnsemble = new KNN[50];
         this.classWeight = new double[50];
+        bestK = 0;
+    }
+    
+    /**
+     * Constructor for creating the KNN Ensemble.
+     * @param numOfEnsembles Number of ensembles.
+     */
+    public KnnEnsemble(int numOfEnsembles){
+        this.knnEnsemble = new KNN[numOfEnsembles];
+        this.classWeight = new double[numOfEnsembles];
+        bestK = 0;
+    }
+    
+    /**
+     * Accessor for best K.
+     * @param bestK The value of the best K.
+     */
+    public void setBestK(int bestK){
+        this.bestK = bestK;
     }
     
     /**
@@ -45,7 +65,6 @@ public class KnnEnsemble {
         Instances clonedDataModel = new Instances(dataModel);
         this.instanceWeights = new double[dataModel.numInstances()];
         double weightedError = 0.0;
-        int bestK = 1;
         
         // Initialize all instance weights as 1
         resetInstanceWeight();
@@ -55,9 +74,8 @@ public class KnnEnsemble {
         
             for (int i = 0; i < knnEnsemble.length; i++){
 
-                // If it's the first run find the best K automatically
-                // else set K based on the optimal K found first
-                if (i == 0){
+                // If best K is not set find it automatically
+                if (this.bestK == 0){
                     knnEnsemble[i] = new KNN(true, true, true);
                     knnEnsemble[i].buildClassifier(clonedDataModel);
                     bestK = knnEnsemble[i].getK();
