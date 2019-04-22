@@ -30,8 +30,8 @@ public class KnnEnsemble {
      * Constructor for creating the KNN Ensemble.
      */
     public KnnEnsemble(){
-        this.knnEnsemble = new KNN[4];
-        this.classWeight = new double[4];
+        this.knnEnsemble = new KNN[50];
+        this.classWeight = new double[50];
     }
     
     /**
@@ -49,38 +49,46 @@ public class KnnEnsemble {
         
         
         // Initialize all instance weights as 1
-        for (int i = 0; i < instanceWeights.length; i++){
-            instanceWeights[i] = 1;
-        }
-        instanceWeights = normalizeInstanceWeight(instanceWeights);
+        resetInstanceWeight();
         
         // Populate the ensemble
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
-                
-                clonedDataModel.resampleWithWeights(new Random(100),
-                        instanceWeights);
-                
-                knnEnsemble[i] = new KNN(true, true, true);
-                knnEnsemble[i].buildClassifier(dataModel);
+//                System.out.println("Run " + i);
+                knnEnsemble[i] = new KNN(true, false, true);
+                knnEnsemble[i].setK(3);
+                knnEnsemble[i].buildClassifier(clonedDataModel);
                 int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
-//                System.out.println("size: " + wrongClassifications.length);
-//                for (int j = 0; j < wrongClassifications.length; j++){
-//                    System.out.println(wrongClassifications[j]);
-//                }
+
+//                System.out.println("Number of wrong instances: " 
+//                        + wrongClassifications.length);
+                
+//                System.out.println("Calculating weighted error");
                 weightedError = calculateWeightedError(wrongClassifications);
-//                System.out.println("The weighted Error: " + weightedError);
+//                System.out.println("Weighted error: " + weightedError);
                 
-                // Calculating the class weight
-                classWeight[i] = Math.log((1-weightedError)/weightedError) / 2;
+                // if the weighted error is zero give high weight to the 
+                // classifier and reset the instance weights
+                if (weightedError == 0.0){
                 
-//                System.out.println("Class weight: " + classWeight[i]);
-                
-                instanceWeights = calculateInstanceWeight(wrongClassifications, 
-                        classWeight[i]);
-                
-                
+                    classWeight[i] = 2;
+                    resetInstanceWeight();
+                    clonedDataModel = new Instances(dataModel);
+                    
+                } else {
+                    
+                    // Calculating the class weight
+                    classWeight[i] = Math.log((1-weightedError)/weightedError) * (0.5);
+
+                    // Re-calculating the instance weights
+                    instanceWeights = calculateInstanceWeight(wrongClassifications, 
+                            classWeight[i]);
+                    
+                    clonedDataModel = clonedDataModel.resampleWithWeights(
+                        new Random(100), instanceWeights);
+                    
+                }
             }
             
         } catch (Exception e){
@@ -137,6 +145,15 @@ public class KnnEnsemble {
         classifyInstance(object);
         
         return results;
+    }
+ 
+    private void resetInstanceWeight(){
+        
+        // Initialize all instance weights as 1
+        for (int i = 0; i < instanceWeights.length; i++){
+            instanceWeights[i] = 1;
+        }
+        instanceWeights = normalizeInstanceWeight(instanceWeights);
     }
     
     /**
@@ -206,6 +223,32 @@ public class KnnEnsemble {
         }
         
         return sum;
+    }
+    
+    
+    private Instances resampleInstances(int[] wrongClassifications){
+        
+        Instances resampledData = new Instances(dataModel);
+        int numOfNewSamples = (int)(resampledData.numInstances() * 0.6);
+        Random rand = new Random();
+        int indexTobeRemoved = 0;
+        
+        for (int i = 0; i < numOfNewSamples; i++){
+            indexTobeRemoved = rand.nextInt(dataModel.numInstances());
+            
+            
+            // If instance was wrongly classified keep in sample
+            for (int j = 0; j < wrongClassifications.length; j++){
+                if (indexTobeRemoved == wrongClassifications[j]){
+                    indexTobeRemoved = rand.nextInt(dataModel.numInstances());
+                }
+            }
+            
+            resampledData.remove(indexTobeRemoved);
+            
+        }
+        
+        return resampledData;
     }
     
 }
