@@ -45,8 +45,7 @@ public class KnnEnsemble {
         Instances clonedDataModel = new Instances(dataModel);
         this.instanceWeights = new double[dataModel.numInstances()];
         double weightedError = 0.0;
-        
-        
+        int bestK = 1;
         
         // Initialize all instance weights as 1
         resetInstanceWeight();
@@ -55,36 +54,51 @@ public class KnnEnsemble {
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
-//                System.out.println("Run " + i);
-                knnEnsemble[i] = new KNN(true, true, true);
-//                knnEnsemble[i].setK(3);
-                knnEnsemble[i].buildClassifier(clonedDataModel);
+
+                // If it's the first run find the best K automatically
+                // else set K based on the optimal K found first
+                if (i == 0){
+                    knnEnsemble[i] = new KNN(true, true, true);
+                    knnEnsemble[i].buildClassifier(clonedDataModel);
+                    bestK = knnEnsemble[i].getK();
+                } else {
+                    knnEnsemble[i] = new KNN(true, false, true);
+                    knnEnsemble[i].setK(bestK);
+                    knnEnsemble[i].buildClassifier(clonedDataModel);
+                }
+                
+                // Get the wrong classifications of this classifier through
+                // 10-fold cross validation
                 int[] wrongClassifications = knnEnsemble[i].crossValidateTest();
 
-//                System.out.println("Number of wrong instances: " 
-//                        + wrongClassifications.length);
-                
-//                System.out.println("Calculating weighted error");
+                // Calculate the weighted error
                 weightedError = calculateWeightedError(wrongClassifications);
-//                System.out.println("Weighted error: " + weightedError);
                 
-                // if the weighted error is zero give high weight to the 
+                // if the weighted error is zero give a high weight to the 
                 // classifier and reset the instance weights
                 if (weightedError == 0.0){
                 
-                    classWeight[i] = 2;
+                    /** Give high weight to this classifier, reset instance 
+                    * weights and use the original data again.
+                    * This hopes to minimize the classifier fluctuation of KNN
+                    * due to random selection if there are ties in each run.
+                    */
+                    classWeight[i] = 1.5;
                     resetInstanceWeight();
                     clonedDataModel = new Instances(dataModel);
                     
                 } else {
                     
                     // Calculating the class weight
-                    classWeight[i] = Math.log((1-weightedError)/weightedError) * (0.5);
+                    classWeight[i] = Math.log((1-weightedError)/weightedError) 
+                            * (0.5);
 
                     // Re-calculating the instance weights
                     instanceWeights = calculateInstanceWeight(wrongClassifications, 
                             classWeight[i]);
                     
+                    // Resample data with more focus on instances that where
+                    // wrongly classified
                     clonedDataModel = clonedDataModel.resampleWithWeights(
                         new Random(100), instanceWeights);
                     
