@@ -396,8 +396,8 @@ public class UEA_ML_Coursework {
 //        testWeightedScheme("./data/Pitcher_Plants_TRAIN.arff", 
 //                "./data/Pitcher_Plants_TEST.arff");
 
-        testDataset("iris", true);
-//        testDataset("ecoli", true);
+//        testDataset("iris", true);
+        testDataset("ecoli", true);
 //        testDataset("libras", true);
 //        testDataset("optical", false);
 //        testDataset("blood", true);

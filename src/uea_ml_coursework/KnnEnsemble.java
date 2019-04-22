@@ -26,6 +26,7 @@ public class KnnEnsemble {
     private double[] classWeight;
     private KNN[] knnEnsemble;
     private int bestK;
+    private int attrSelectionCycle;
     
     /**
      * Constructor for creating the KNN Ensemble.
@@ -34,6 +35,7 @@ public class KnnEnsemble {
         this.knnEnsemble = new KNN[50];
         this.classWeight = new double[50];
         bestK = 0;
+        attrSelectionCycle = 1;
     }
     
     /**
@@ -44,6 +46,7 @@ public class KnnEnsemble {
         this.knnEnsemble = new KNN[numOfEnsembles];
         this.classWeight = new double[numOfEnsembles];
         bestK = 0;
+        attrSelectionCycle = 2;
     }
     
     /**
@@ -65,7 +68,7 @@ public class KnnEnsemble {
         Instances clonedDataModel = new Instances(dataModel);
         this.instanceWeights = new double[dataModel.numInstances()];
         double weightedError = 0.0;
-        calculateAttrCombination();
+        
         // Initialize all instance weights as 1
         resetInstanceWeight();
         
@@ -74,12 +77,38 @@ public class KnnEnsemble {
         
             for (int i = 0; i < knnEnsemble.length; i++){
 
-                // If best K is not set find it automatically
-                if (this.bestK == 0){
-                    knnEnsemble[i] = new KNN(true, true, true);
+                // if first run, get the original dataset
+                if (i == 0){
+                    
+                    // if best K value is not set find it automatically
+                    if (this.bestK == 0){
+                        knnEnsemble[i] = new KNN(true, true, true);
+                    } else {
+                        knnEnsemble[i] = new KNN(true, false, true);
+                    }
+                    
                     knnEnsemble[i].buildClassifier(clonedDataModel);
                     bestK = knnEnsemble[i].getK();
-                } else {
+                    
+                } 
+                // If in the first half run, resample attributes
+                else if (i < (knnEnsemble.length/2)){
+                    
+                    knnEnsemble[i] = new KNN(true, false, true);
+                    knnEnsemble[i].setK(bestK);
+                    clonedDataModel = resampleAttribute();
+                    knnEnsemble[i].buildClassifier(clonedDataModel);
+                    
+                } 
+                // If in the second half run, resample instances
+                else {
+                    
+                    // If second half run starts resample from original data
+                    // and move on
+                    if(i == (knnEnsemble.length/2)){
+                        clonedDataModel = new Instances(dataModel);
+                    }
+                    
                     knnEnsemble[i] = new KNN(true, false, true);
                     knnEnsemble[i].setK(bestK);
                     knnEnsemble[i].buildClassifier(clonedDataModel);
@@ -101,7 +130,7 @@ public class KnnEnsemble {
                     * This hopes to minimize the classifier fluctuation of KNN
                     * due to random selection if there are ties in each run.
                     */
-                    classWeight[i] = 1.5;
+                    classWeight[i] = 2;
                     resetInstanceWeight();
                     clonedDataModel = new Instances(dataModel);
                     
@@ -110,16 +139,20 @@ public class KnnEnsemble {
                     // Calculating the class weight
                     classWeight[i] = Math.log((1-weightedError)/weightedError) 
                             * (0.5);
-
-                    // Re-calculating the instance weights
-                    instanceWeights = calculateInstanceWeight(wrongClassifications, 
+                    
+                    // If in second half run, recalculate instance weight and
+                    // resample instances based on weight
+                    if (i > (knnEnsemble.length/2)){
+                        
+                        // Re-calculating the instance weights
+                        instanceWeights = calculateInstanceWeight(wrongClassifications, 
                             classWeight[i]);
-                    
-                    // Resample data with more focus on instances that where
-                    // wrongly classified
-                    clonedDataModel = clonedDataModel.resampleWithWeights(
-                        new Random(100), instanceWeights);
-                    
+                        
+                        // Resample data with more focus on instances that where
+                        // wrongly classified
+                        clonedDataModel = clonedDataModel.resampleWithWeights(
+                            new Random(100), instanceWeights);
+                    }
                 }
             }
             
@@ -261,55 +294,29 @@ public class KnnEnsemble {
         return sum;
     }
     
-    private int calculateAttrCombination(){
-        
-        int result = 0;
-        int numberOfAttr = dataModel.numAttributes()-1;
-        int allAttrFactorial = factorial(numberOfAttr);
-        
-        for (int i = 1; i < numberOfAttr; i++){
-            
-            result += allAttrFactorial/(factorial(i) * 
-                    factorial(numberOfAttr - i));
-            
-        }
-           
-        System.out.println("Factorial of " + (numberOfAttr) + " "
-                + ": " + result);
-
-        return result;
-    }
-    
-    private int factorial(int number){
-        int result = 1;
-        
-        for (int i = number; i > 0; i--){
-            result *= i;
-        }
-        return result;
-    }
-    
-    private Instances resampleInstances(int[] wrongClassifications){
+    private Instances resampleAttribute(){
         
         Instances resampledData = new Instances(dataModel);
-        int numOfNewSamples = (int)(resampledData.numInstances() * 0.6);
         Random rand = new Random();
-        int indexTobeRemoved = 0;
+        int attrIndexToRemove = 0;
+        // Class attribute and total number of attribute need to be ignored
+        // since they don't contribute to attribute combination selection
+        int numOfAttr = dataModel.numAttributes() - 2;
+        int numOfSelectedAttr = this.attrSelectionCycle % numOfAttr;
         
-        for (int i = 0; i < numOfNewSamples; i++){
-            indexTobeRemoved = rand.nextInt(dataModel.numInstances());
-            
-            
-            // If instance was wrongly classified keep in sample
-            for (int j = 0; j < wrongClassifications.length; j++){
-                if (indexTobeRemoved == wrongClassifications[j]){
-                    indexTobeRemoved = rand.nextInt(dataModel.numInstances());
-                }
-            }
-            
-            resampledData.remove(indexTobeRemoved);
-            
+        // if cycle of attribute sampling matches number of attributes - 1
+        // select random (attributes - 1) attributes
+        if(numOfSelectedAttr == 0){
+            numOfSelectedAttr = numOfAttr;
         }
+        
+        // Randomly remove attributes 
+        for (int i = 0; i < numOfSelectedAttr; i++){
+            attrIndexToRemove = rand.nextInt((numOfAttr + 1));
+            resampledData.deleteAttributeAt(attrIndexToRemove);
+            numOfAttr--;
+        }
+        this.attrSelectionCycle++;
         
         return resampledData;
     }
