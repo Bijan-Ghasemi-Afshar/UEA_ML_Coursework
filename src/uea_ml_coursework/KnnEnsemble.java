@@ -65,7 +65,7 @@ public class KnnEnsemble {
         Instances clonedDataModel = new Instances(dataModel);
         this.instanceWeights = new double[dataModel.numInstances()];
         double weightedError = 0.0;
-        
+        calculateAttrCombination();
         // Initialize all instance weights as 1
         resetInstanceWeight();
         
@@ -261,6 +261,33 @@ public class KnnEnsemble {
         return sum;
     }
     
+    private int calculateAttrCombination(){
+        
+        int result = 0;
+        int numberOfAttr = dataModel.numAttributes()-1;
+        int allAttrFactorial = factorial(numberOfAttr);
+        
+        for (int i = 1; i < numberOfAttr; i++){
+            
+            result += allAttrFactorial/(factorial(i) * 
+                    factorial(numberOfAttr - i));
+            
+        }
+           
+        System.out.println("Factorial of " + (numberOfAttr) + " "
+                + ": " + result);
+
+        return result;
+    }
+    
+    private int factorial(int number){
+        int result = 1;
+        
+        for (int i = number; i > 0; i--){
+            result *= i;
+        }
+        return result;
+    }
     
     private Instances resampleInstances(int[] wrongClassifications){
         
