@@ -474,11 +474,14 @@ public class UEA_ML_Coursework {
                         knn.buildClassifier(splitedData[0]);
                         
                         // Test classifiers
+                        // 1NN
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
                         Evaluation eval = new Evaluation(splitedData[0]);
                         eval.evaluateModel(oneNN, splitedData[1]);
                         // Get accuracy (error)
                         accuracy = WekaTools.accuracy(oneNN, splitedData[1]);
-                        sb.append(accuracy);
+                        sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
                         
                         // Get balanced accuracy (balanced error)
@@ -486,16 +489,18 @@ public class UEA_ML_Coursework {
                             balancedAccuracy += eval.recall(j);
                         }
                         balancedAccuracy /= splitedData[1].numClasses();
-                        sb.append(accuracy);
+                        sb.append(String.format("%.4f", balancedAccuracy));
                         sb.append('\n');
                         oneNNWriter.write(sb.toString());
                         sb.setLength(0);
                         
-                        
+                        // KNN
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
                         eval.evaluateModel(knn, splitedData[1]);
                         // Get accuracy (error)
                         accuracy = WekaTools.accuracy(knn, splitedData[1]);
-                        sb.append(accuracy);
+                        sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
                         
                         // Get balanced accuracy (balanced error)
@@ -503,7 +508,7 @@ public class UEA_ML_Coursework {
                             balancedAccuracy += eval.recall(j);
                         }
                         balancedAccuracy /= splitedData[1].numClasses();
-                        sb.append(accuracy);
+                        sb.append(String.format("%.4f", balancedAccuracy));
                         sb.append('\n');
                         knnWriter.write(sb.toString());
                         sb.setLength(0);
