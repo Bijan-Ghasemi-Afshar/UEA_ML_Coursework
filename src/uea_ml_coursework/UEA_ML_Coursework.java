@@ -5,11 +5,13 @@
 package uea_ml_coursework;
 
 import weka.classifiers.Evaluation;
-import weka.core.Debug.Random;
 import weka.core.Instances;
 import weka.tools.WekaTools;
 import static weka.tools.WekaTools.confusionMatrix;
 import static weka.tools.WekaTools.printConfusionMatrix;
+import java.io.File;
+import java.io.PrintWriter;
+import utilities.InstanceTools;
 
 
 /**
@@ -318,17 +320,14 @@ public class UEA_ML_Coursework {
             // Build the classifiers using the training data
             try{
                 knn.buildClassifier(trainData);
-                knn.setSetKAuto(true);
+//                knn.setK(21);
+                knn.setStandardise(true);
+//                knn.setSetKAuto(true);
                 knn.setWeightedScheme(true);
                 if (testEnsemble){
                     knnEnsem.setBestK(knn.getK());
                     knnEnsem.buildClassifier(trainData);
                 }
-                
-//                Evaluation eval = new Evaluation(trainData);
-//                eval.crossValidateModel(knn, trainData, 10, new Random(100));
-//                System.out.printf("Estimated Accuracy: %.2f%%\n",
-//                        eval.pctCorrect());
             } catch (Exception e){
                 System.out.println("There was an issue building classifier\n"
                         + e);
@@ -341,6 +340,25 @@ public class UEA_ML_Coursework {
                 testData = WekaTools.loadData(testDataLocation, true);
                 System.out.println("------Testing data properties------");
                 WekaTools.printDatasetInfo(testData);
+                
+                double balancedAcc = 0.0;
+                
+                Evaluation eval = new Evaluation(trainData);
+                eval.evaluateModel(knn, testData);
+                System.out.println(eval.toSummaryString());
+                for (int i = 0; i < testData.numClasses(); i++){
+                    balancedAcc += eval.recall(i);
+                    System.out.println("TPR: " + balancedAcc);
+                }
+                balancedAcc /= testData.numClasses();
+                System.out.println("Balanced Accuracy: " + balancedAcc);
+//                System.out.println("TNR: " + 
+//                        eval.trueNegativeRate(testData.classIndex()));
+                
+//                eval.crossValidateModel(knn, testData, 10, new Random(100));
+//                System.out.printf("Estimated Accuracy: %.2f%%\n",
+//                        eval.pctCorrect());
+                
             } catch (Exception e){
                 System.out.println("Error loading test data\n" + e);
             }
@@ -353,8 +371,8 @@ public class UEA_ML_Coursework {
                     testData);
               
             // Get Accuracy
-            System.out.printf("KNN Accuracy: %.2f%%\n",  
-                    WekaTools.getAccuracy(actualResults, classifiedInstances));
+//            System.out.printf("KNN Accuracy: %.2f%%\n",  
+//                    WekaTools.getAccuracy(actualResults, classifiedInstances));
             
             // Get Confusion Matrix
             int[][] confMatrix = confusionMatrix(classifiedInstances,
@@ -362,22 +380,148 @@ public class UEA_ML_Coursework {
             printConfusionMatrix(confMatrix);
     
             // Test ensemble if flag is set
-            if (testEnsemble){
-                System.out.println("------KNN Ensemle------");
-                classifiedInstances = getEnsembleResults(knnEnsem, testData);
-                
-                // Get Accuracy
-                System.out.printf("KNN Ensemble Accuracy: %.2f%%\n",  
-                    WekaTools.getAccuracy(actualResults, classifiedInstances));
-                
-                // Get Confusion Matrix
-                confMatrix = confusionMatrix(classifiedInstances,
-                    actualResults, trainData.numClasses());
-                printConfusionMatrix(confMatrix);
-            }
+//            if (testEnsemble){
+//                System.out.println("------KNN Ensemle------");
+//                classifiedInstances = getEnsembleResults(knnEnsem, testData);
+//                
+//                // Get Accuracy
+//                System.out.printf("KNN Ensemble Accuracy: %.2f%%\n",  
+//                    WekaTools.getAccuracy(actualResults, classifiedInstances));
+//                
+//                // Get Confusion Matrix
+//                confMatrix = confusionMatrix(classifiedInstances,
+//                    actualResults, trainData.numClasses());
+//                printConfusionMatrix(confMatrix);
+//            }
 
 
         }
+    }
+    
+    /**
+     * Test the first hypothesis KNN vs 1NN
+     */
+    public static void KNNvs1NN(){
+        
+        Instances dataset = null;
+        Instances[] splitedData = new Instances[2];
+        KnnEnsemble knnEnsem = null;
+        KNN knn = null, oneNN = null;
+        byte datasetIndex = 1;
+        double accuracy = 0.0, balancedAccuracy = 0.0;
+        PrintWriter oneNNWriter = null, knnWriter = null;
+        
+        
+        // Write to csv file
+        
+        
+        File datasetsDir = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/datasets");
+        File results = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results");
+        File[] datasets = datasetsDir.listFiles();
+        if (datasets != null) {
+            
+            oneNN = new KNN();
+            knn = new KNN(true, true, false);
+            
+            
+            // Write the problem name in csv results
+            try{
+                oneNNWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/onenn.csv"));
+                knnWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/knn.csv"));
+            } catch(Exception e){
+                System.out.println("printWriter error\n" + e);
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("Dataset");
+            sb.append(',');
+            sb.append("Accuracy");
+            sb.append(',');
+            sb.append("Balanced Accuracy");
+            sb.append('\n');
+            
+            oneNNWriter.print(sb.toString());
+            knnWriter.print(sb.toString());
+            
+            sb.setLength(0);
+            
+            // Loop through all datasets
+            for (File child : datasets) {
+
+                // Get the current dataset
+                try{
+                    String datasetLocation = child.getCanonicalPath() + "/" +
+                            child.getName() + ".arff";
+                    System.out.println(datasetIndex + " Path: " +
+                            datasetLocation);
+                    dataset = WekaTools.loadData(datasetLocation, false);
+                    
+                    // Loop 30 times
+                    for (int i = 0; i < 30; i++){
+                        
+                        sb.append(child.getName());
+                        sb.append(',');
+
+                        oneNNWriter.write(sb.toString());
+                        knnWriter.write(sb.toString());
+
+                        sb.setLength(0);
+                        
+                        // Split data with resampling (50-50)
+                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
+                        
+                        // Train classifiers
+                        oneNN.buildClassifier(splitedData[0]);
+                        knn.buildClassifier(splitedData[0]);
+                        
+                        // Test classifiers
+                        Evaluation eval = new Evaluation(splitedData[0]);
+                        eval.evaluateModel(oneNN, splitedData[1]);
+                        // Get accuracy (error)
+                        accuracy = WekaTools.accuracy(oneNN, splitedData[1]);
+                        sb.append(accuracy);
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(accuracy);
+                        sb.append('\n');
+                        oneNNWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                        
+                        eval.evaluateModel(knn, splitedData[1]);
+                        // Get accuracy (error)
+                        accuracy = WekaTools.accuracy(knn, splitedData[1]);
+                        sb.append(accuracy);
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(accuracy);
+                        sb.append('\n');
+                        knnWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                    }
+                    
+                } catch (Exception e){
+                    System.out.println("An error occured\n" + e );
+                }
+                
+                datasetIndex++;
+            }
+        } else {
+          System.out.println("Directory is empty");
+        }
+        oneNNWriter.close();
+        knnWriter.close();
+        
     }
     
     /**
@@ -403,10 +547,11 @@ public class UEA_ML_Coursework {
 //        testDataset("blood", true);
 //        testDataset("bank", false);
 //        testDataset("breast-tissue", true);
-        testDataset("conn-bench-sonar-mines-rocks", true);
+//        testDataset("conn-bench-sonar-mines-rocks", true);
 //        testDataset("conn-bench-vowel-deterding", true);
 //        testDataset("hill-valley", true);
 
+        KNNvs1NN();
 
     }
     
