@@ -206,6 +206,7 @@ public class KNN extends AbstractClassifier {
         if (setKAuto){
             setKWithLOOCV();
         }
+        
     }
     
     /**
@@ -601,11 +602,13 @@ public class KNN extends AbstractClassifier {
         // The size of training data is always 1 fewer than original
         int[] kRange = setKRange(dataModel.numInstances());
         int[] kAccuracies = new int[kRange.length];
+        
         // For each instance set it to test and the rest to train
         for (int i = 0; i<originalDataModel.numInstances(); i++){
             dataModel = new Instances(originalDataModel);
             test = dataModel.get(i);
             dataModel.delete(i);
+            System.out.println(i);
             // Test the accuracy for every value of K (1-Kmax)
             for (int j = 0; j < kRange.length; j++){
                 this.k = kRange[j];
@@ -631,6 +634,8 @@ public class KNN extends AbstractClassifier {
         
         // Set data model back to the original dataset
         dataModel = new Instances(originalDataModel);
+        
+        System.out.println("Best K: " + (highestKIndex + 1));
         
         // Set K to the highest accuracy
         this.k = (highestKIndex + 1);
