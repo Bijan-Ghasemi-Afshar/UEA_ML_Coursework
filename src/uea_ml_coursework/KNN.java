@@ -608,7 +608,7 @@ public class KNN extends AbstractClassifier {
             dataModel = new Instances(originalDataModel);
             test = dataModel.get(i);
             dataModel.delete(i);
-            System.out.println(i);
+            System.out.println("loocv: " + i);
             // Test the accuracy for every value of K (1-Kmax)
             for (int j = 0; j < kRange.length; j++){
                 this.k = kRange[j];

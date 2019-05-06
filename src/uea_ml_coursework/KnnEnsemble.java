@@ -15,6 +15,8 @@ import weka.core.Capabilities;
 import weka.core.Debug.Random;
 import weka.core.Instance;
 import weka.core.Instances;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 /**
  * 18/04/2019
@@ -29,6 +31,7 @@ public class KnnEnsemble implements Classifier{
     private KNN[] knnEnsemble;
     private int bestK;
     private int attrSelectionCycle;
+    double[] classifyResults;
     
     /**
      * Constructor for creating the KNN Ensemble.
@@ -78,7 +81,7 @@ public class KnnEnsemble implements Classifier{
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
-                
+                System.out.println("Element " + i + " Bestk " + this.bestK);
                 // if first run, get the original dataset
                 if (i == 0){
                     
@@ -90,7 +93,7 @@ public class KnnEnsemble implements Classifier{
                     }
                     
                     knnEnsemble[i].buildClassifier(clonedDataModel);
-                    bestK = knnEnsemble[i].getK();
+//                    bestK = knnEnsemble[i].getK();
                     
                 } 
                 // If in the first half run, resample attributes
@@ -160,7 +163,7 @@ public class KnnEnsemble implements Classifier{
         } catch (Exception e){
             System.out.println("There was an issue creating ensemble\n" + e);
         }
-        
+        System.out.println("Ensemble is done");
     }
     
     /**
@@ -170,10 +173,11 @@ public class KnnEnsemble implements Classifier{
      */
     public double classifyInstance(Instance object){
         int classIndex = 0;
-        double[] classifyResults = new double[dataModel.numClasses()];
+        classifyResults = new double[dataModel.numClasses()];
         double highestVote = 0;
         
-//        System.out.println("\n");
+//        System.out.println("\n");'
+//        System.out.println("Classifyinig ensemble");
         for (int i = 0; i < knnEnsemble.length; i++){
             classIndex = (int)knnEnsemble[i].classifyInstance(object);
 //            System.out.println(classIndex);
@@ -196,7 +200,7 @@ public class KnnEnsemble implements Classifier{
                 classIndex = i;
             } else {}
         }
-        
+//        System.out.println("finished classifying");
         return (double)classIndex;
     }
     
@@ -209,6 +213,10 @@ public class KnnEnsemble implements Classifier{
         double[] results = new double[dataModel.numClasses()];
         
         classifyInstance(object);
+        
+        for (int i = 0; i < results.length; i++){
+            results[i] = (double)classifyResults[i]/(double)DoubleStream.of(classifyResults).sum();
+        }
         
         return results;
     }

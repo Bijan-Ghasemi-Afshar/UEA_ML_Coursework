@@ -36,7 +36,7 @@ public class UEA_ML_Coursework {
         for (int i = 0; i < testData.numInstances(); i++){
             
             try {
-                
+                System.out.println(i + "/" + testData.numInstances());
                 classificationResults[i] = (int)classifier.classifyInstance(testData.instance(i));
                 
             } catch (Exception e) {
@@ -345,21 +345,10 @@ public class UEA_ML_Coursework {
                 
 //                double balancedAcc = 0.0;
                 
-//                Evaluation eval = new Evaluation(trainData);
-//                eval.evaluateModel(knn, testData);
-//                System.out.println(eval.toSummaryString());
-//                for (int i = 0; i < testData.numClasses(); i++){
-//                    balancedAcc += eval.recall(i);
-//                    System.out.println("TPR: " + balancedAcc);
-//                }
-//                balancedAcc /= testData.numClasses();
-//                System.out.println("Balanced Accuracy: " + balancedAcc);
-//                System.out.println("TNR: " + 
-//                        eval.trueNegativeRate(testData.classIndex()));
-                
-//                eval.crossValidateModel(knn, testData, 10, new Random(100));
-//                System.out.printf("Estimated Accuracy: %.2f%%\n",
-//                        eval.pctCorrect());
+                Evaluation eval = new Evaluation(trainData);
+                eval.evaluateModel(knnEnsem, testData);
+                System.out.println(eval.toSummaryString());
+
                 
             } catch (Exception e){
                 System.out.println("Error loading test data\n" + e);
@@ -390,6 +379,11 @@ public class UEA_ML_Coursework {
                 System.out.printf("KNN Ensemble Accuracy: %.2f%%\n",  
                     WekaTools.getAccuracy(actualResults, classifiedInstances));
                 
+                
+                double[] results = knnEnsem.distributionForInstance(testData.get(0));
+                for (int i = 0; i < results.length; i++){
+                    System.out.println("class " + i + ": " + results[i]);
+                }
                 // Get Confusion Matrix
                 confMatrix = confusionMatrix(classifiedInstances,
                     actualResults, trainData.numClasses());
@@ -593,9 +587,9 @@ public class UEA_ML_Coursework {
                     dataset = WekaTools.loadData(datasetLocation, false);
                     
                     // Loop 5 times
-                    for (int i = 0; i < 5; i++){
+//                    for (int i = 0; i < 5; i++){
                         
-                        System.out.println("Run: " + i );
+//                        System.out.println("Run: " + i );
                         
                         sb.append(child.getName());
                         sb.append(',');
@@ -606,13 +600,13 @@ public class UEA_ML_Coursework {
                         sb.setLength(0);
                         
                         // Split data with resampling (50-50)
-                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
+                        splitedData = InstanceTools.resampleInstances(dataset, 100, 0.5);
                         
                         // Train classifiers
-                        knnEnsem.buildClassifier(splitedData[0]);
                         knnEnsem.setBestK(5);
-                        knn.buildClassifier(splitedData[0]);
+                        knnEnsem.buildClassifier(splitedData[0]);
                         knn.setK(5);
+                        knn.buildClassifier(splitedData[0]);
                         
                         // Test classifiers
                         // KNN Ensemble
@@ -620,13 +614,15 @@ public class UEA_ML_Coursework {
                         accuracy = 0.0;
                         auc = 0.0;
                         Evaluation eval = new Evaluation(splitedData[0]);
+                        System.out.println("Evaluate model");
                         eval.evaluateModel(knnEnsem, splitedData[1]);
+                        System.out.println(eval.toSummaryString());
+                        System.out.println("Finished Evaluate model");
                         // Get accuracy (error)
-                        int[] ensembleResults = getEnsembleResults(knnEnsem, splitedData[1]);
-                        int[] actualResults = WekaTools.getClassValues(splitedData[1]);
-                        accuracy = WekaTools.getAccuracy(ensembleResults, ensembleResults);
+                        accuracy = eval.pctCorrect();
                         sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
+                        System.out.println("Ensemble KNN accu: " + accuracy);
                         
                         // Get balanced accuracy (balanced error)
                         for (int j = 0; j < splitedData[1].numClasses(); j++){
@@ -641,6 +637,7 @@ public class UEA_ML_Coursework {
                         sb.append('\n');
                         ensembleWriter.write(sb.toString());
                         sb.setLength(0);
+                        System.out.println("Ensemble KNN Baccu: " + balancedAccuracy);
                         
                         // KNN
                         balancedAccuracy = 0.0;
@@ -648,9 +645,10 @@ public class UEA_ML_Coursework {
                         auc = 0.0;
                         eval.evaluateModel(knn, splitedData[1]);
                         // Get accuracy (error)
-                        accuracy = WekaTools.accuracy(knn, splitedData[1]);
+                        accuracy = eval.pctCorrect();
                         sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
+                        System.out.println("KNN accu: " + accuracy);
                         
                         // Get balanced accuracy (balanced error)
                         for (int j = 0; j < splitedData[1].numClasses(); j++){
@@ -665,8 +663,8 @@ public class UEA_ML_Coursework {
                         sb.append('\n');
                         knnWriter.write(sb.toString());
                         sb.setLength(0);
-                        
-                    }
+                        System.out.println("KNN Baccu: " + balancedAccuracy);
+//                    }
                     
                 } catch (Exception e){
                     System.out.println("An error occured\n" + e );
@@ -743,9 +741,9 @@ public class UEA_ML_Coursework {
                     dataset = WekaTools.loadData(datasetLocation, false);
                     
                     // Loop 5 times
-                    for (int i = 0; i < 5; i++){
+//                    for (int i = 0; i < 5; i++){
                         
-                        System.out.println("Run: " + i );
+//                        System.out.println("Run: " + i );
                         
                         sb.append(child.getName());
                         sb.append(',');
@@ -757,7 +755,7 @@ public class UEA_ML_Coursework {
                         sb.setLength(0);
                         
                         // Split data with resampling (50-50)
-                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
+                        splitedData = InstanceTools.resampleInstances(dataset, 10, 0.5);
                         
                         // Train classifiers
                         knnEnsem.buildClassifier(splitedData[0]);
@@ -843,7 +841,7 @@ public class UEA_ML_Coursework {
                         sb.setLength(0);
                         
                         
-                    }
+//                    }
                     
                 } catch (Exception e){
                     System.out.println("An error occured\n" + e );
@@ -888,7 +886,9 @@ public class UEA_ML_Coursework {
 //        testDataset("bank", false);
 //        testDataset("hill-valley", false);
 
-        KNNvs1NN();
+//        KNNvs1NN();
+
+        knnEnsemblevsKnn();
 
     }
     
