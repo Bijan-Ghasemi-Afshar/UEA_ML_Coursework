@@ -12,6 +12,8 @@ import static weka.tools.WekaTools.printConfusionMatrix;
 import java.io.File;
 import java.io.PrintWriter;
 import utilities.InstanceTools;
+import weka.classifiers.functions.MultilayerPerceptron;
+import weka.classifiers.trees.RandomForest;
 
 
 /**
@@ -532,6 +534,333 @@ public class UEA_ML_Coursework {
     }
     
     /**
+     * Experiment for testing knn ensemble vs knn
+     */
+    public static void knnEnsemblevsKnn(){
+        
+        Instances dataset = null;
+        Instances[] splitedData = new Instances[2];
+        KnnEnsemble knnEnsem = null;
+        KNN knn = null;
+        byte datasetIndex = 1;
+        double accuracy = 0.0, balancedAccuracy = 0.0, auc = 0.0;
+        PrintWriter ensembleWriter = null, knnWriter = null;
+        
+        
+        // Write to csv file
+        
+        
+        File datasetsDir = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/datasets");
+        File results = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results");
+        File[] datasets = datasetsDir.listFiles();
+        if (datasets != null) {
+            
+            knnEnsem = new KnnEnsemble();
+            knn = new KNN();
+            
+            
+            // Write the problem name in csv results
+            try{
+                ensembleWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/ensemble2.csv"));
+                knnWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/knn2.csv"));
+            } catch(Exception e){
+                System.out.println("printWriter error\n" + e);
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("Dataset");
+            sb.append(',');
+            sb.append("Accuracy");
+            sb.append(',');
+            sb.append("Balanced Accuracy");
+            sb.append(',');
+            sb.append("AUC");
+            sb.append('\n');
+            
+            ensembleWriter.print(sb.toString());
+            knnWriter.print(sb.toString());
+            
+            sb.setLength(0);
+            
+            // Loop through all datasets
+            for (File child : datasets) {
+
+                // Get the current dataset
+                try{
+                    String datasetLocation = child.getCanonicalPath() + "/" +
+                            child.getName() + ".arff";
+                    System.out.println(datasetIndex + " Path: " +
+                            datasetLocation);
+                    dataset = WekaTools.loadData(datasetLocation, false);
+                    
+                    // Loop 5 times
+                    for (int i = 0; i < 5; i++){
+                        
+                        System.out.println("Run: " + i );
+                        
+                        sb.append(child.getName());
+                        sb.append(',');
+
+                        ensembleWriter.write(sb.toString());
+                        knnWriter.write(sb.toString());
+
+                        sb.setLength(0);
+                        
+                        // Split data with resampling (50-50)
+                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
+                        
+                        // Train classifiers
+                        knnEnsem.buildClassifier(splitedData[0]);
+                        knnEnsem.setBestK(5);
+                        knn.buildClassifier(splitedData[0]);
+                        knn.setK(5);
+                        
+                        // Test classifiers
+                        // KNN Ensemble
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
+                        auc = 0.0;
+                        Evaluation eval = new Evaluation(splitedData[0]);
+                        eval.evaluateModel(knnEnsem, splitedData[1]);
+                        // Get accuracy (error)
+                        int[] ensembleResults = getEnsembleResults(knnEnsem, splitedData[1]);
+                        int[] actualResults = WekaTools.getClassValues(splitedData[1]);
+                        accuracy = WekaTools.getAccuracy(ensembleResults, ensembleResults);
+                        sb.append(String.format("%.4f", accuracy));
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                            auc += eval.areaUnderROC(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", balancedAccuracy));
+                        sb.append(',');
+                        auc /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", auc));
+                        sb.append('\n');
+                        ensembleWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                        // KNN
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
+                        auc = 0.0;
+                        eval.evaluateModel(knn, splitedData[1]);
+                        // Get accuracy (error)
+                        accuracy = WekaTools.accuracy(knn, splitedData[1]);
+                        sb.append(String.format("%.4f", accuracy));
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                            auc += eval.areaUnderROC(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", balancedAccuracy));
+                        sb.append(',');
+                        auc /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", auc));
+                        sb.append('\n');
+                        knnWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                    }
+                    
+                } catch (Exception e){
+                    System.out.println("An error occured\n" + e );
+                }
+                
+                datasetIndex++;
+            }
+        } else {
+          System.out.println("Directory is empty");
+        }
+        ensembleWriter.close();
+        knnWriter.close();
+        
+    }
+    
+    /**
+     * Experiment for comparing KNN Ensemble vs MLP vs RF
+     */
+    public static void knnEnsemblevsMLPvsRF(){
+        
+        Instances dataset = null;
+        Instances[] splitedData = new Instances[2];
+        KnnEnsemble knnEnsem = null;
+        MultilayerPerceptron mlp = null;
+        RandomForest rf = null;
+        byte datasetIndex = 1;
+        double accuracy = 0.0, balancedAccuracy = 0.0, auc = 0.0;
+        PrintWriter ensembleWriter = null, mlpWriter = null, rfWriter = null;
+        
+        
+        File datasetsDir = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/datasets");
+        File results = new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results");
+        File[] datasets = datasetsDir.listFiles();
+        if (datasets != null) {
+            
+            knnEnsem = new KnnEnsemble();
+            mlp = new MultilayerPerceptron();
+            rf = new RandomForest();
+            
+            
+            // Write the problem name in csv results
+            try{
+                ensembleWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/ensemble3.csv"));
+                mlpWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/mlp.csv"));
+                rfWriter = new PrintWriter(new File("/home/bijan/NetBeansProjects/UEA_ML_Coursework/results/randomForest.csv"));
+            } catch(Exception e){
+                System.out.println("printWriter error\n" + e);
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("Dataset");
+            sb.append(',');
+            sb.append("Accuracy");
+            sb.append(',');
+            sb.append("Balanced Accuracy");
+            sb.append(',');
+            sb.append("AUC");
+            sb.append('\n');
+            
+            ensembleWriter.print(sb.toString());
+            mlpWriter.print(sb.toString());
+            rfWriter.print(sb.toString());
+            
+            sb.setLength(0);
+            
+            // Loop through all datasets
+            for (File child : datasets) {
+
+                // Get the current dataset
+                try{
+                    String datasetLocation = child.getCanonicalPath() + "/" +
+                            child.getName() + ".arff";
+                    System.out.println(datasetIndex + " Path: " +
+                            datasetLocation);
+                    dataset = WekaTools.loadData(datasetLocation, false);
+                    
+                    // Loop 5 times
+                    for (int i = 0; i < 5; i++){
+                        
+                        System.out.println("Run: " + i );
+                        
+                        sb.append(child.getName());
+                        sb.append(',');
+
+                        ensembleWriter.write(sb.toString());
+                        mlpWriter.write(sb.toString());
+                        rfWriter.print(sb.toString());
+
+                        sb.setLength(0);
+                        
+                        // Split data with resampling (50-50)
+                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
+                        
+                        // Train classifiers
+                        knnEnsem.buildClassifier(splitedData[0]);
+                        knnEnsem.setBestK(5);
+                        mlp.buildClassifier(splitedData[0]);
+                        rf.buildClassifier(splitedData[0]);
+                        
+                        
+                        // Test classifiers
+                        // KNN Ensemble
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
+                        auc = 0.0;
+                        Evaluation eval = new Evaluation(splitedData[0]);
+                        eval.evaluateModel(knnEnsem, splitedData[1]);
+                        // Get accuracy (error)
+                        int[] ensembleResults = getEnsembleResults(knnEnsem, splitedData[1]);
+                        int[] actualResults = WekaTools.getClassValues(splitedData[1]);
+                        accuracy = WekaTools.getAccuracy(ensembleResults, ensembleResults);
+                        sb.append(String.format("%.4f", accuracy));
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                            auc += eval.areaUnderROC(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", balancedAccuracy));
+                        sb.append(',');
+                        auc /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", auc));
+                        sb.append('\n');
+                        ensembleWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                        // MLP
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
+                        auc = 0.0;
+                        eval.evaluateModel(mlp, splitedData[1]);
+                        // Get accuracy (error)
+                        accuracy = WekaTools.accuracy(mlp, splitedData[1]);
+                        sb.append(String.format("%.4f", accuracy));
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                            auc += eval.areaUnderROC(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", balancedAccuracy));
+                        sb.append(',');
+                        auc /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", auc));
+                        sb.append('\n');
+                        mlpWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                        // RF
+                        balancedAccuracy = 0.0;
+                        accuracy = 0.0;
+                        auc = 0.0;
+                        eval.evaluateModel(rf, splitedData[1]);
+                        // Get accuracy (error)
+                        accuracy = WekaTools.accuracy(rf, splitedData[1]);
+                        sb.append(String.format("%.4f", accuracy));
+                        sb.append(',');
+                        
+                        // Get balanced accuracy (balanced error)
+                        for (int j = 0; j < splitedData[1].numClasses(); j++){
+                            balancedAccuracy += eval.recall(j);
+                            auc += eval.areaUnderROC(j);
+                        }
+                        balancedAccuracy /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", balancedAccuracy));
+                        sb.append(',');
+                        auc /= splitedData[1].numClasses();
+                        sb.append(String.format("%.4f", auc));
+                        sb.append('\n');
+                        rfWriter.write(sb.toString());
+                        sb.setLength(0);
+                        
+                        
+                    }
+                    
+                } catch (Exception e){
+                    System.out.println("An error occured\n" + e );
+                }
+                
+                datasetIndex++;
+            }
+        } else {
+          System.out.println("Directory is empty");
+        }
+        ensembleWriter.close();
+        mlpWriter.close();
+        rfWriter.close();
+        
+    }
+    
+    /**
      * The main function for testing the KNN classifier.
      * @param args Terminal arguments passed to the program
      */
@@ -557,9 +886,9 @@ public class UEA_ML_Coursework {
 //        testDataset("conn-bench-sonar-mines-rocks", true);
 //        testDataset("conn-bench-vowel-deterding", true);
 //        testDataset("bank", false);
-        testDataset("hill-valley", false);
+//        testDataset("hill-valley", false);
 
-//        KNNvs1NN();
+        KNNvs1NN();
 
     }
     

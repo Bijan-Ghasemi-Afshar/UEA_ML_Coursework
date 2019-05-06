@@ -10,6 +10,8 @@
  */
 package uea_ml_coursework;
 
+import weka.classifiers.Classifier;
+import weka.core.Capabilities;
 import weka.core.Debug.Random;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -18,7 +20,7 @@ import weka.core.Instances;
  * 18/04/2019
  * @author Bijan Ghasemi Afshar (100125463)
  */
-public class KnnEnsemble {
+public class KnnEnsemble implements Classifier{
     
     // Class properties
     private Instances dataModel;
@@ -318,6 +320,11 @@ public class KnnEnsemble {
         this.attrSelectionCycle++;
         
         return resampledData;
+    }
+
+    @Override
+    public Capabilities getCapabilities() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
