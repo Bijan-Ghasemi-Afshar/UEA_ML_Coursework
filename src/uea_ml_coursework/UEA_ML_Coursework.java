@@ -741,9 +741,9 @@ public class UEA_ML_Coursework {
                     dataset = WekaTools.loadData(datasetLocation, false);
                     
                     // Loop 5 times
-//                    for (int i = 0; i < 5; i++){
+                    for (int i = 0; i < 5; i++){
                         
-//                        System.out.println("Run: " + i );
+                        System.out.println("Run: " + i );
                         
                         sb.append(child.getName());
                         sb.append(',');
@@ -851,7 +851,7 @@ public class UEA_ML_Coursework {
                         sb.setLength(0);
                         
                         
-//                    }
+                    }
                     
                 } catch (Exception e){
                     System.out.println("An error occured\n" + e );
