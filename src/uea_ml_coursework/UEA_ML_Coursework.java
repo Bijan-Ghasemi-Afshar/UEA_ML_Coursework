@@ -587,9 +587,9 @@ public class UEA_ML_Coursework {
                     dataset = WekaTools.loadData(datasetLocation, false);
                     
                     // Loop 5 times
-//                    for (int i = 0; i < 5; i++){
+                    for (int i = 0; i < 3; i++){
                         
-//                        System.out.println("Run: " + i );
+                        System.out.println("Run: " + i );
                         
                         sb.append(child.getName());
                         sb.append(',');
@@ -600,7 +600,7 @@ public class UEA_ML_Coursework {
                         sb.setLength(0);
                         
                         // Split data with resampling (50-50)
-                        splitedData = InstanceTools.resampleInstances(dataset, 100, 0.5);
+                        splitedData = InstanceTools.resampleInstances(dataset, i, 0.5);
                         
                         // Train classifiers
                         knnEnsem.setBestK(5);
@@ -664,7 +664,7 @@ public class UEA_ML_Coursework {
                         knnWriter.write(sb.toString());
                         sb.setLength(0);
                         System.out.println("KNN Baccu: " + balancedAccuracy);
-//                    }
+                    }
                     
                 } catch (Exception e){
                     System.out.println("An error occured\n" + e );
@@ -758,8 +758,8 @@ public class UEA_ML_Coursework {
                         splitedData = InstanceTools.resampleInstances(dataset, 10, 0.5);
                         
                         // Train classifiers
-                        knnEnsem.buildClassifier(splitedData[0]);
                         knnEnsem.setBestK(5);
+                        knnEnsem.buildClassifier(splitedData[0]);
                         mlp.buildClassifier(splitedData[0]);
                         rf.buildClassifier(splitedData[0]);
                         
@@ -770,11 +770,11 @@ public class UEA_ML_Coursework {
                         accuracy = 0.0;
                         auc = 0.0;
                         Evaluation eval = new Evaluation(splitedData[0]);
+                        System.out.println("Evaluating Ensemble");
                         eval.evaluateModel(knnEnsem, splitedData[1]);
+                        System.out.println("Ensemble acc: " + eval.pctCorrect());
                         // Get accuracy (error)
-                        int[] ensembleResults = getEnsembleResults(knnEnsem, splitedData[1]);
-                        int[] actualResults = WekaTools.getClassValues(splitedData[1]);
-                        accuracy = WekaTools.getAccuracy(ensembleResults, ensembleResults);
+                        accuracy = eval.pctCorrect();
                         sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
                         
@@ -784,9 +784,11 @@ public class UEA_ML_Coursework {
                             auc += eval.areaUnderROC(j);
                         }
                         balancedAccuracy /= splitedData[1].numClasses();
+                        System.out.println("Ensemble B-acc: " + balancedAccuracy);
                         sb.append(String.format("%.4f", balancedAccuracy));
                         sb.append(',');
                         auc /= splitedData[1].numClasses();
+                        System.out.println("Ensemble AUC: " + auc);
                         sb.append(String.format("%.4f", auc));
                         sb.append('\n');
                         ensembleWriter.write(sb.toString());
@@ -796,9 +798,11 @@ public class UEA_ML_Coursework {
                         balancedAccuracy = 0.0;
                         accuracy = 0.0;
                         auc = 0.0;
+                        System.out.println("Evaluating MLP");
                         eval.evaluateModel(mlp, splitedData[1]);
+                        System.out.println("MLP acc: " + eval.pctCorrect());
                         // Get accuracy (error)
-                        accuracy = WekaTools.accuracy(mlp, splitedData[1]);
+                        accuracy = eval.pctCorrect();
                         sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
                         
@@ -808,9 +812,11 @@ public class UEA_ML_Coursework {
                             auc += eval.areaUnderROC(j);
                         }
                         balancedAccuracy /= splitedData[1].numClasses();
+                        System.out.println("MLP B-acc: " + balancedAccuracy);
                         sb.append(String.format("%.4f", balancedAccuracy));
                         sb.append(',');
                         auc /= splitedData[1].numClasses();
+                        System.out.println("MLP AUC: " + auc);
                         sb.append(String.format("%.4f", auc));
                         sb.append('\n');
                         mlpWriter.write(sb.toString());
@@ -820,9 +826,11 @@ public class UEA_ML_Coursework {
                         balancedAccuracy = 0.0;
                         accuracy = 0.0;
                         auc = 0.0;
+                        System.out.println("RF Evaluating");
                         eval.evaluateModel(rf, splitedData[1]);
+                        System.out.println("RF acc: " + eval.pctCorrect());
                         // Get accuracy (error)
-                        accuracy = WekaTools.accuracy(rf, splitedData[1]);
+                        accuracy = eval.pctCorrect();
                         sb.append(String.format("%.4f", accuracy));
                         sb.append(',');
                         
@@ -832,9 +840,11 @@ public class UEA_ML_Coursework {
                             auc += eval.areaUnderROC(j);
                         }
                         balancedAccuracy /= splitedData[1].numClasses();
+                        System.out.println("RF B-acc: " + balancedAccuracy);
                         sb.append(String.format("%.4f", balancedAccuracy));
                         sb.append(',');
                         auc /= splitedData[1].numClasses();
+                        System.out.println("RF AUC: " + auc);
                         sb.append(String.format("%.4f", auc));
                         sb.append('\n');
                         rfWriter.write(sb.toString());
@@ -888,7 +898,9 @@ public class UEA_ML_Coursework {
 
 //        KNNvs1NN();
 
-        knnEnsemblevsKnn();
+//        knnEnsemblevsKnn();
+
+        knnEnsemblevsMLPvsRF();
 
     }
     
