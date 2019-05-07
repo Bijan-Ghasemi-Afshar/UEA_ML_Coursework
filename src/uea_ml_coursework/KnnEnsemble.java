@@ -10,7 +10,6 @@
  */
 package uea_ml_coursework;
 
-import weka.classifiers.Classifier;
 import weka.core.Capabilities;
 import weka.core.Debug.Random;
 import weka.core.Instance;
@@ -22,7 +21,7 @@ import java.util.stream.DoubleStream;
  * 18/04/2019
  * @author Bijan Ghasemi Afshar (100125463)
  */
-public class KnnEnsemble implements Classifier{
+public class KnnEnsemble{
     
     // Class properties
     private Instances dataModel;
@@ -81,7 +80,6 @@ public class KnnEnsemble implements Classifier{
         try {
         
             for (int i = 0; i < knnEnsemble.length; i++){
-                System.out.println("Element " + i + " Bestk " + this.bestK);
                 // if first run, get the original dataset
                 if (i == 0){
                     
@@ -93,7 +91,6 @@ public class KnnEnsemble implements Classifier{
                     }
                     
                     knnEnsemble[i].buildClassifier(clonedDataModel);
-//                    bestK = knnEnsemble[i].getK();
                     
                 } 
                 // If in the first half run, resample attributes
@@ -176,20 +173,17 @@ public class KnnEnsemble implements Classifier{
         classifyResults = new double[dataModel.numClasses()];
         double highestVote = 0;
         
-//        System.out.println("\n");'
-//        System.out.println("Classifyinig ensemble");
+
         for (int i = 0; i < knnEnsemble.length; i++){
             classIndex = (int)knnEnsemble[i].classifyInstance(object);
-//            System.out.println(classIndex);
+
             classifyResults[classIndex] += classWeight[i];
         }
-//        System.out.println("\n");
-        
+      
         // Find the class with highest vote
         for (int i = 0; i < classifyResults.length; i++){
             
-//            System.out.println(i + " classify Vote: " + classifyResults[i]);
-            
+
             if (classifyResults[i] == highestVote){
                 if (Math.random() < 0.5){
                     highestVote = classifyResults[i];
@@ -200,7 +194,7 @@ public class KnnEnsemble implements Classifier{
                 classIndex = i;
             } else {}
         }
-//        System.out.println("finished classifying");
+
         return (double)classIndex;
     }
     
@@ -247,12 +241,11 @@ public class KnnEnsemble implements Classifier{
             sumOfWeights += value;
         }
         
-//        System.out.println("Sum of instance Weights: " + sumOfWeights);
-        
+
         for (int i = 0; i < dataModel.numInstances(); i++){
             
             weights[i] = weights[i]/sumOfWeights;
-//            System.out.println(i + " weight: " + weights[i]);
+
         }
         
         return weights;
@@ -303,6 +296,10 @@ public class KnnEnsemble implements Classifier{
         return sum;
     }
     
+    /**
+     * Function for resampling attributes for building KNN Ensemble
+     * @return the instances with resampled attributes
+     */
     private Instances resampleAttribute(){
         
         Instances resampledData = new Instances(dataModel);
@@ -328,11 +325,6 @@ public class KnnEnsemble implements Classifier{
         this.attrSelectionCycle++;
         
         return resampledData;
-    }
-
-    @Override
-    public Capabilities getCapabilities() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
